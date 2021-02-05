@@ -33,9 +33,17 @@ public class ExifUtil {
                 if(field.getName().startsWith("TAG_")){
                     field.setAccessible(true);
                     try {
-                        String tag = (String) field.get(ExifInterface.class);
-                        String val = exif.getAttribute(tag);
-                        exifMap.put(tag,val);
+                        Object obj = field.get(ExifInterface.class);
+                        if(obj instanceof String){
+                            String tag = (String) field.get(ExifInterface.class);
+                            String val = exif.getAttribute(tag);
+                            if(!TextUtils.isEmpty(val)){
+                                exifMap.put(tag,val);
+                            }
+                        }else {
+                            w("field not string:"+obj);
+                        }
+
                     }catch (Throwable throwable){
                         exception("dd",throwable);
                     }

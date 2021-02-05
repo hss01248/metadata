@@ -1,6 +1,6 @@
 # MetaData in Android
 
-# Meta Data of media
+# Meta Data of audio/video
 
 ## you can
 
@@ -52,7 +52,7 @@ Add this to your module's `build.gradle` file (make sure the version matches the
 ```
 dependencies {
 	...
-	compile 'com.github.hss01248:metadata:1.0.0'
+	compile 'com.github.hss01248:metadata:1.0.1'
 
 }
 ```
