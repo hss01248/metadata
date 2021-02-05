@@ -1,0 +1,3 @@
+include ':metadata'
+include ':app'
+rootProject.name = "MetaDataDemo"

@@ -1,0 +1,134 @@
+package com.hss01248.media.metadata;
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import androidx.exifinterface.media.ExifInterface;
+import android.text.TextUtils;
+import android.util.Log;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+
+public class ExifUtil {
+
+
+
+    public static Map<String,String> readExif(InputStream inputStream){
+       return readExif(inputStream,true);
+    }
+    public static Map<String,String> readExif(InputStream inputStream,boolean close){
+        Map<String,String> exifMap = new HashMap<>();
+        try {
+            ExifInterface exif = new ExifInterface(inputStream);
+            Class exifClazz = ExifInterface.class;
+            Field[] fields = exifClazz.getDeclaredFields();
+            for (int i = 0; i < fields.length; i++) {
+                Field field = fields[i];
+                if(field.getName().startsWith("TAG_")){
+                    field.setAccessible(true);
+                    try {
+                        String tag = (String) field.get(ExifInterface.class);
+                        String val = exif.getAttribute(tag);
+                        exifMap.put(tag,val);
+                    }catch (Throwable throwable){
+                        exception("dd",throwable);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            exception("dd",e);
+        }finally {
+            if(close){
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            json(exifMap);
+            return exifMap;
+        }
+    }
+
+    private static void json(Map<String, String> exifMap) {
+       Log.i("exif", exifMap.toString());
+    }
+
+    private static void exception(String dd, Throwable throwable) {
+        throwable.printStackTrace();
+    }
+
+    public static void writeExif(Map<String,String> exifMap, String file){
+        try{
+            if(exifMap.isEmpty()){
+                w("exifMap.isEmpty");
+                return;
+            }
+            File file1 = new File(file);
+            if(!file1.exists()){
+                w("file not exist:"+file);
+                return;
+            }
+            resetImageWHToMap(exifMap,file,true);
+            ExifInterface exif = new ExifInterface(file);
+            Iterator<Map.Entry<String,String>> it = exifMap.entrySet().iterator();
+            while (it.hasNext()){
+                Map.Entry<String,String> entry = it.next();
+                if(entry.getValue() != null){
+                    try {
+                        exif.setAttribute(entry.getKey(),entry.getValue());
+                    }catch (Throwable throwable){
+                        exception("setAttribute",throwable);
+                    }
+                }
+            }
+            exif.saveAttributes();
+        }catch (Throwable e){
+            e.printStackTrace();
+        }
+    }
+
+    private static void w(String s) {
+        Log.w("exif",s);
+    }
+
+    public static void resetImageWHToMap(Map<String, String> exifMap, String file,boolean resetOritation) {
+        if(exifMap.isEmpty()){
+            w("exifMap.isEmpty");
+            return;
+        }
+        if(TextUtils.isEmpty(file)){
+            w("file.isEmpty");
+            return;
+        }
+        File file1 = new File(file);
+        if(!file1.exists()){
+            w("file not exist:"+file);
+            return;
+        }
+        try{
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            Bitmap bitmap = BitmapFactory.decodeFile(file, options); // 此时返回的bitmap为null
+            if(options.outWidth> 0 && options.outHeight > 0){
+                exifMap.put("ImageLength",options.outHeight+"");
+                exifMap.put("ImageWidth",options.outWidth+"");
+                exifMap.put("PixelXDimension",options.outHeight+"");
+                exifMap.put("PixelYDimension",options.outWidth+"");
+                if(resetOritation){
+                    exifMap.put("Orientation",0+"");
+                }
+            }
+
+
+        }catch (Throwable throwable){
+            exception("setAttribute",throwable);
+        }
+    }
+}
