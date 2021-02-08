@@ -41,7 +41,7 @@ public class ExifUtil {
                                 exifMap.put(tag,val);
                             }
                         }else {
-                            w("field not string:"+obj);
+                            //w("field not string:"+obj);
                         }
 
                     }catch (Throwable throwable){
@@ -95,6 +95,9 @@ public class ExifUtil {
                         exception("setAttribute",throwable);
                     }
                 }
+            }
+            if(!exif.hasAttribute(ExifInterface.TAG_DATETIME)){
+                exif.setAttribute(ExifInterface.TAG_DATETIME,String.format("YYYY-MM-DD HH:MM:SS",System.currentTimeMillis()));
             }
             exif.saveAttributes();
         }catch (Throwable e){
