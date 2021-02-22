@@ -11,6 +11,11 @@ import java.util.TreeMap;
 
 public class MetaDataUtil {
 
+    /**
+     * 可用于音频和视频,不能用于图片
+     * @param path
+     * @return
+     */
     public static Map<String,String> getAllInfo(String path){
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         Field[] fields = MediaMetadataRetriever.class.getDeclaredFields();

@@ -1,12 +1,17 @@
 package com.hss01248.media.metadata;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import androidx.exifinterface.media.ExifInterface;
+
+import android.graphics.Rect;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -18,6 +23,10 @@ import java.util.Map;
 public class ExifUtil {
 
 
+    static Context context;
+    public static void init(Context context){
+        ExifUtil.context = context;
+    }
 
     public static Map<String,String> readExif(InputStream inputStream){
        return readExif(inputStream,true);
@@ -83,7 +92,7 @@ public class ExifUtil {
                 w("file not exist:"+file);
                 return;
             }
-            resetImageWHToMap(exifMap,file,true);
+            resetImageWHToMap(exifMap,getInputStream(file),true);
             ExifInterface exif = new ExifInterface(file);
             Iterator<Map.Entry<String,String>> it = exifMap.entrySet().iterator();
             while (it.hasNext()){
@@ -109,24 +118,19 @@ public class ExifUtil {
         Log.w("exif",s);
     }
 
-    public static void resetImageWHToMap(Map<String, String> exifMap, String file,boolean resetOritation) {
+    public static void resetImageWHToMap(Map<String, String> exifMap, InputStream stream,boolean resetOritation) {
         if(exifMap.isEmpty()){
             w("exifMap.isEmpty");
             return;
         }
-        if(TextUtils.isEmpty(file)){
-            w("file.isEmpty");
-            return;
-        }
-        File file1 = new File(file);
-        if(!file1.exists()){
-            w("file not exist:"+file);
+        if(stream == null){
+            w("stream.isEmpty");
             return;
         }
         try{
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
-            Bitmap bitmap = BitmapFactory.decodeFile(file, options); // 此时返回的bitmap为null
+            Bitmap bitmap = BitmapFactory.decodeStream(stream,new Rect(), options); // 此时返回的bitmap为null
             if(options.outWidth> 0 && options.outHeight > 0){
                 exifMap.put("ImageLength",options.outHeight+"");
                 exifMap.put("ImageWidth",options.outWidth+"");
@@ -141,5 +145,15 @@ public class ExifUtil {
         }catch (Throwable throwable){
             exception("setAttribute",throwable);
         }
+    }
+
+    public static InputStream getInputStream(String source) throws IOException{
+        if(TextUtils.isEmpty(source)){
+            return null;
+        }
+        if(source.startsWith("/storage/")){
+            return new FileInputStream(source);
+        }
+        return context.getContentResolver().openInputStream(Uri.parse(source));
     }
 }
