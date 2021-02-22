@@ -74,19 +74,19 @@ public class FileFinder {
                         String name = file.getName();
                         int type = SafFileFinder.guessTypeByName(name);
 
-                        if (type == BaseMediaFolderInfo.TYPE_IMAGE) {
+                        if (type == BaseMediaInfo.TYPE_IMAGE) {
                             imageCount++;
                             imagesFileSize = imagesFileSize + file.length();
                             if (imageFolder == null) {
                                 imageFolder = new BaseMediaFolderInfo();
                                 imageFolder.name= dir.getName();
                                 imageFolder.cover = file.getAbsolutePath();
-                                imageFolder.type = BaseMediaFolderInfo.TYPE_IMAGE;
+                                imageFolder.type = BaseMediaInfo.TYPE_IMAGE;
                                 imageFolder.updatedTime = file.lastModified();
                                 imageFolder.pathOrUri = dir.getAbsolutePath();
                                 Log.d("扫描", "添加有图文件夹:" + dir.getAbsolutePath());
                             }
-                        }else if(type == BaseMediaFolderInfo.TYPE_VIDEO){
+                        }else if(type == BaseMediaInfo.TYPE_VIDEO){
                             videoCount++;
                             videoFileSize = videoFileSize + file.length();
                             if (videoFolder == null) {
@@ -94,11 +94,11 @@ public class FileFinder {
                                 videoFolder.name= dir.getName();
                                 videoFolder.cover = file.getAbsolutePath();
                                 videoFolder.updatedTime = file.lastModified();
-                                videoFolder.type = BaseMediaFolderInfo.TYPE_VIDEO;
+                                videoFolder.type = BaseMediaInfo.TYPE_VIDEO;
                                 videoFolder.pathOrUri = dir.getAbsolutePath();
                                 Log.d("扫描", "添加有视频文件夹:" + dir.getAbsolutePath());
                             }
-                        }else if(type == BaseMediaFolderInfo.TYPE_AUDIO){
+                        }else if(type == BaseMediaInfo.TYPE_AUDIO){
                             audioCount++;
                             audioFileSize = audioFileSize + file.length();
                             if (audioFolder == null) {
@@ -106,7 +106,7 @@ public class FileFinder {
                                 audioFolder.name= dir.getName();
                                 audioFolder.cover = file.getAbsolutePath();
                                 audioFolder.updatedTime = file.lastModified();
-                                audioFolder.type = BaseMediaFolderInfo.TYPE_AUDIO;
+                                audioFolder.type = BaseMediaInfo.TYPE_AUDIO;
                                 audioFolder.pathOrUri = dir.getAbsolutePath();
                                 Log.d("扫描", "添加有音频文件夹:" + dir.getAbsolutePath());
                             }

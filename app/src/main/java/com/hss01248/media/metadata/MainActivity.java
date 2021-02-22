@@ -9,9 +9,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.hss01248.media.mymediastore.DefaultScanFolderCallback;
 import com.hss01248.media.mymediastore.FileFinder;
 import com.hss01248.media.mymediastore.SafFileFinder;
 import com.hss01248.media.mymediastore.SafUtil;
+import com.hss01248.media.mymediastore.ScanFolderCallback;
 import com.hss01248.media.mymediastore.bean.BaseMediaFolderInfo;
 
 import java.net.URLDecoder;
@@ -34,27 +36,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPermissionGet(DocumentFile dir) {
                 Log.e(SafUtil.TAG,"get root success:"+ URLDecoder.decode(dir.getUri().toString()));
-                SafFileFinder.listAllAlbum(new Observer<List<BaseMediaFolderInfo>>() {
+                DefaultScanFolderCallback callback = new DefaultScanFolderCallback() {
                     @Override
-                    public void onSubscribe(@io.reactivex.annotations.NonNull Disposable d) {
+                    protected void notifyDataSetChanged() {
+                        Log.e(SafUtil.TAG,"infos notifyDataSetChanged: "+ getInfos().size());
 
                     }
-
-                    @Override
-                    public void onNext(@io.reactivex.annotations.NonNull List<BaseMediaFolderInfo> baseMediaFolderInfos) {
-
-                    }
-
-                    @Override
-                    public void onError(@io.reactivex.annotations.NonNull Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onComplete() {
-
-                    }
-                });
+                };
+                SafFileFinder.listAllAlbum(callback);
             }
 
             @Override

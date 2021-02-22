@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
 }
+apply plugin: 'org.greenrobot.greendao'
 
 android {
     compileSdkVersion 29
@@ -39,4 +40,7 @@ dependencies {
 
     //api project(':metadata')
     api project(':myMediaStore')
+    implementation 'com.facebook.stetho:stetho:1.5.1'
 }
+
+
