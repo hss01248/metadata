@@ -4,12 +4,19 @@ import android.media.MediaMetadataRetriever;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class MetaDataUtil {
+
+    public static String getExifStr(String path){
+        Map<String,String> map = getAllInfo(path);
+        return map.toString().replaceAll(",","\n");
+    }
+
 
     /**
      * 可用于音频和视频,不能用于图片

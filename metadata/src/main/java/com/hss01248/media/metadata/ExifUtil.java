@@ -18,6 +18,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 
 
 public class ExifUtil {
@@ -31,8 +32,13 @@ public class ExifUtil {
     public static Map<String,String> readExif(InputStream inputStream){
        return readExif(inputStream,true);
     }
+
+    public static String getExifStr(InputStream inputStream){
+        Map<String,String> map = readExif(inputStream);
+        return map.toString().replaceAll(",","\n");
+    }
     public static Map<String,String> readExif(InputStream inputStream,boolean close){
-        Map<String,String> exifMap = new HashMap<>();
+        Map<String,String> exifMap = new TreeMap<>();
         try {
             ExifInterface exif = new ExifInterface(inputStream);
             Class exifClazz = ExifInterface.class;
@@ -64,7 +70,7 @@ public class ExifUtil {
             if(close){
                 try {
                     inputStream.close();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
