@@ -157,7 +157,8 @@ public class ExifUtil {
         if(TextUtils.isEmpty(source)){
             return null;
         }
-        if(source.startsWith("/storage/")){
+        File file = new File(source);
+        if(file.exists()){
             return new FileInputStream(source);
         }
         return context.getContentResolver().openInputStream(Uri.parse(source));
