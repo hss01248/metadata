@@ -100,7 +100,7 @@ public class ExifUtil {
         return val;
     }
 
-    private static String parseOritation(String val) {
+    private static String parseColorSpace(String val) {
         if((ExifInterface.COLOR_SPACE_S_RGB+"").equals(val)){
             return "sRGB";
         }else if((ExifInterface.COLOR_SPACE_UNCALIBRATED+"").equals(val)){
@@ -109,7 +109,7 @@ public class ExifUtil {
         return "sRGB";
     }
 
-    private static String parseColorSpace(String val) {
+    private static String parseOritation(String val) {
        if((ExifInterface.ORIENTATION_ROTATE_90+"").equals(val)){
            return "90";
         }else if((ExifInterface.ORIENTATION_ROTATE_180+"").equals(val)){
