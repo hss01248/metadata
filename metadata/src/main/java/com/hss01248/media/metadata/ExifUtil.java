@@ -30,6 +30,7 @@ public class ExifUtil {
 
 
     static Context context;
+   public static boolean enableLog;
     public static void init(Context context){
         ExifUtil.context = context;
     }
@@ -204,10 +205,12 @@ public class ExifUtil {
 
 
     private static void json(Map<String, String> exifMap) {
+        if(enableLog)
        Log.i("exif", exifMap.toString());
     }
 
     private static void exception(String dd, Throwable throwable) {
+        if(enableLog)
         throwable.printStackTrace();
     }
 
@@ -245,6 +248,7 @@ public class ExifUtil {
     }
 
     private static void w(String s) {
+        if(enableLog)
         Log.w("exif",s);
     }
 
