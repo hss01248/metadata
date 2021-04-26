@@ -26,6 +26,8 @@ Map<String,String> ExifUtil.readExif(java.io.InputStream)
   
  //or writeExif to a file
  void writeExif(Map<String,String> exifMap, String file)
+
+ void copyExif(String from, String to)
 ```
 
 

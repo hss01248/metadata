@@ -40,52 +40,54 @@ public class ExifUtil {
        return readExif(inputStream,true);
     }
 
+    public static void copyExif(String from, String to){
+        writeExif(readExif(from),to);
+    }
+
     public static String getExifStr(InputStream inputStream){
-        Map<String,String> map = readExif(inputStream);
+        Map<String,String> map = new TreeMap<>(readExif(inputStream));
+        for (Map.Entry<String, String> stringStringEntry : map.entrySet()) {
+            stringStringEntry.setValue(stringfySomeTag(stringStringEntry.getKey(),stringStringEntry.getValue()));
+        }
         String str =  map.toString().replaceAll(",","\n");
         return str;
     }
 
     public static String getExifStr(String path){
-        Map<String,String> map = readExif(path);
-        String str =  map.toString().replaceAll(",","\n");
+        Map<String,String> exifMap = new TreeMap<>(readExif(path));
+        try {
+            //inputStream有位移,所以不能继续使用
+            File file = new File(path);
+            exifMap.put("00-path",path);
+            exifMap.put("0-fileSize",formatFileSize(file.length()));
+
+            exifMap.put("0-wh",formatWh(file));
+
+            exifMap.put("0-quality",new Magick().getJPEGImageQuality(new FileInputStream(file))+"");
+        }catch (Throwable throwable){
+            throwable.printStackTrace();
+        }
+        for (Map.Entry<String, String> stringStringEntry : exifMap.entrySet()) {
+            stringStringEntry.setValue(stringfySomeTag(stringStringEntry.getKey(),stringStringEntry.getValue()));
+        }
+        String str =  exifMap.toString().replaceAll(",","\n");
         return str;
     }
 
     public static Map<String,String> readExif(String path){
         try {
-            return readExif(new FileInputStream(new File(path)),path,true);
+            return readExif(new FileInputStream(new File(path)),true);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             return new TreeMap<>();
         }
     }
 
-    public static Map<String,String> readExif(InputStream inputStream,boolean close){
-        return readExif(inputStream,null, close);
-    }
 
-     static Map<String,String> readExif(InputStream inputStream,String path,boolean close){
+
+    public static Map<String,String> readExif(InputStream inputStream,boolean close){
         Map<String,String> exifMap = new TreeMap<>();
         try {
-            if(!TextUtils.isEmpty(path)){
-                try {
-                //inputStream有位移,所以不能继续使用
-                File file = new File(path);
-                exifMap.put("00-path",path);
-                exifMap.put("0-fileSize",formatFileSize(file.length()));
-
-                exifMap.put("0-wh",formatWh(file));
-
-                    exifMap.put("0-quality",new Magick().getJPEGImageQuality(new FileInputStream(file))+"");
-                }catch (Throwable throwable){
-                    throwable.printStackTrace();
-                }
-            }else {
-                //todo
-            }
-
-
             ExifInterface exif = new ExifInterface(inputStream);
             Class exifClazz = ExifInterface.class;
             Field[] fields = exifClazz.getDeclaredFields();
@@ -99,7 +101,6 @@ public class ExifUtil {
                             String tag = (String) field.get(ExifInterface.class);
                             String val = exif.getAttribute(tag);
                             if(!TextUtils.isEmpty(val)){
-                               val =  stringfySomeTag(tag,val);
                                 exifMap.put(tag,val);
                             }
                         }else {
