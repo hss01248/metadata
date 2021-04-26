@@ -11,13 +11,17 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.hss01248.media.metadata.quality.Magick;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -36,7 +40,8 @@ public class ExifUtil {
 
     public static String getExifStr(InputStream inputStream){
         Map<String,String> map = readExif(inputStream);
-        return map.toString().replaceAll(",","\n");
+        String str =  map.toString().replaceAll(",","\n");
+        return str;
     }
     public static Map<String,String> readExif(InputStream inputStream,boolean close){
         Map<String,String> exifMap = new TreeMap<>();
@@ -66,6 +71,15 @@ public class ExifUtil {
                     }
                 }
             }
+
+            exifMap.put("0-fileSize",formatFileSize(inputStream.available()));
+            exifMap.put("0-wh",formatWh(inputStream));
+            try {
+                exifMap.put("0-quality",new Magick().getJPEGImageQuality(inputStream)+"");
+            }catch (Throwable throwable){
+                throwable.printStackTrace();
+            }
+
         } catch (Exception e) {
             exception("dd",e);
         }finally {
@@ -79,6 +93,42 @@ public class ExifUtil {
             json(exifMap);
             return exifMap;
         }
+    }
+
+    private static String formatWh(InputStream inputStream) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        try {
+            BitmapFactory.decodeStream(inputStream,null,options);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        /**
+         *options.outHeight为原始图片的高
+         */
+        return options.outWidth+"x"+ options.outHeight;
+
+
+    }
+
+    private static String formatFileSize(long size) {
+        try {
+            DecimalFormat dff = new DecimalFormat(".00");
+            if (size >= 1024 * 1024) {
+                double doubleValue = ((double) size) / (1024 * 1024);
+                String value = dff.format(doubleValue);
+                return value + "MB";
+            } else if (size > 1024) {
+                double doubleValue = ((double) size) / 1024;
+                String value = dff.format(doubleValue);
+                return value + "KB";
+            } else {
+                return size + "B";
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return String.valueOf(size);
     }
 
     private static String stringfySomeTag(String tag, String val) {
