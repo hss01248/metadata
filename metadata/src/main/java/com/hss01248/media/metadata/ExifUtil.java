@@ -15,6 +15,7 @@ import com.hss01248.media.metadata.quality.Magick;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -44,9 +45,47 @@ public class ExifUtil {
         String str =  map.toString().replaceAll(",","\n");
         return str;
     }
+
+    public static String getExifStr(String path){
+        Map<String,String> map = readExif(path);
+        String str =  map.toString().replaceAll(",","\n");
+        return str;
+    }
+
+    public static Map<String,String> readExif(String path){
+        try {
+            return readExif(new FileInputStream(new File(path)),path,true);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return new TreeMap<>();
+        }
+    }
+
     public static Map<String,String> readExif(InputStream inputStream,boolean close){
+        return readExif(inputStream,null, close);
+    }
+
+     static Map<String,String> readExif(InputStream inputStream,String path,boolean close){
         Map<String,String> exifMap = new TreeMap<>();
         try {
+            if(!TextUtils.isEmpty(path)){
+                try {
+                //inputStream有位移,所以不能继续使用
+                File file = new File(path);
+                exifMap.put("00-path",path);
+                exifMap.put("0-fileSize",formatFileSize(file.length()));
+
+                exifMap.put("0-wh",formatWh(file));
+
+                    exifMap.put("0-quality",new Magick().getJPEGImageQuality(new FileInputStream(file))+"");
+                }catch (Throwable throwable){
+                    throwable.printStackTrace();
+                }
+            }else {
+                //todo
+            }
+
+
             ExifInterface exif = new ExifInterface(inputStream);
             Class exifClazz = ExifInterface.class;
             Field[] fields = exifClazz.getDeclaredFields();
@@ -73,13 +112,8 @@ public class ExifUtil {
                 }
             }
 
-            exifMap.put("0-fileSize",formatFileSize(inputStream.available()));
-            exifMap.put("0-wh",formatWh(inputStream));
-            try {
-                exifMap.put("0-quality",new Magick().getJPEGImageQuality(inputStream)+"");
-            }catch (Throwable throwable){
-                throwable.printStackTrace();
-            }
+
+
 
         } catch (Exception e) {
             exception("dd",e);
@@ -96,11 +130,11 @@ public class ExifUtil {
         }
     }
 
-    private static String formatWh(InputStream inputStream) {
+    private static String formatWh(File file) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         try {
-            BitmapFactory.decodeStream(inputStream,null,options);
+            BitmapFactory.decodeFile(file.getAbsolutePath(),options);
         } catch (Throwable e) {
             e.printStackTrace();
         }

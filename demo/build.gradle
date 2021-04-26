@@ -1,14 +1,13 @@
 plugins {
     id 'com.android.application'
 }
-apply plugin: 'org.greenrobot.greendao'
 
 android {
     compileSdkVersion 29
-    buildToolsVersion "30.0.2"
+    buildToolsVersion "29.0.3"
 
     defaultConfig {
-        applicationId "com.hss01248.media.metadatademo"
+        applicationId "com.hss01248.mediax.demo"
         minSdkVersion 16
         targetSdkVersion 29
         versionCode 1
@@ -43,5 +42,3 @@ dependencies {
     implementation 'com.facebook.stetho:stetho:1.5.1'
     implementation 'com.github.skyNet2017:TakePhoto:4.2.1'
 }
-
-

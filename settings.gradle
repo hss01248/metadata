@@ -1,4 +1,4 @@
-include ':myMediaStore'
+include ':demo'
 include ':metadata'
-include ':app'
+
 rootProject.name = "MetaDataDemo"
