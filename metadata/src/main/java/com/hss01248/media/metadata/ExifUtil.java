@@ -317,7 +317,7 @@ public class ExifUtil {
                 return;
             }
             resetImageWHToMap(exifMap,getInputStream(file),true);
-            ExifInterface exif = new ExifInterface(getInputStream(file));
+            ExifInterface exif = new ExifInterface(file);
             Iterator<Map.Entry<String,String>> it = exifMap.entrySet().iterator();
             while (it.hasNext()){
                 Map.Entry<String,String> entry = it.next();
