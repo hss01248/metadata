@@ -82,6 +82,7 @@ public class ExifUtil {
         for (Map.Entry<String, String> stringStringEntry : map.entrySet()) {
             stringStringEntry.setValue(stringfySomeTag(stringStringEntry.getKey(),stringStringEntry.getValue()));
         }
+        map.put("00-path",path);
         map.put("0-wh",wh);
         map.put("0-quality",quality);
         map.put("0-fileSize",fileSize);
@@ -94,12 +95,11 @@ public class ExifUtil {
             if(inputStream instanceof FileInputStream){
                 //Accessing hidden field Ljava/io/FileInputStream;->path:Ljava/lang/String; (greylist-max-o, reflection, denied)
 //java.lang.NoSuchFieldException: No field path in class Ljava/io/FileInputStream; (declaration of 'java.io.FileInputStream' appears in /apex/com.android.runtime/javalib/core-oj.jar)
-               /* Class clazz = FileInputStream.class;
+                Class clazz = FileInputStream.class;
                 Field field = clazz.getDeclaredField("path");
                 field.setAccessible(true);
-              String path = (String) field.get(inputStream);*/
-              return "";
-
+              String path = (String) field.get(inputStream);
+              return path;
             }
         }catch (Throwable throwable){
             throwable.printStackTrace();
