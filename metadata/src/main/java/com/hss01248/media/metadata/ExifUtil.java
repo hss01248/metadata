@@ -28,8 +28,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import me.weishu.reflection.Reflection;
-
 
 public class ExifUtil {
 
@@ -38,14 +36,6 @@ public class ExifUtil {
    public static boolean enableLog;
     public static void init(Context context){
         ExifUtil.context = context;
-    }
-
-    public static  void attachBaseContext(Context base,boolean shouldAlowFreeReflection){
-        ExifUtil.enableLog = shouldAlowFreeReflection;
-        if(shouldAlowFreeReflection){
-            Reflection.unseal(base);
-        }
-
     }
 
     public static Map<String,String> readExif(InputStream inputStream){
@@ -95,7 +85,6 @@ public class ExifUtil {
         map.put("0-wh",wh);
         map.put("0-quality",quality);
         map.put("0-fileSize",fileSize);
-        map.put("00-path",path);
         String str =  map.toString().replaceAll(",","\n");
         return str;
     }
@@ -105,13 +94,11 @@ public class ExifUtil {
             if(inputStream instanceof FileInputStream){
                 //Accessing hidden field Ljava/io/FileInputStream;->path:Ljava/lang/String; (greylist-max-o, reflection, denied)
 //java.lang.NoSuchFieldException: No field path in class Ljava/io/FileInputStream; (declaration of 'java.io.FileInputStream' appears in /apex/com.android.runtime/javalib/core-oj.jar)
-                Class clazz = FileInputStream.class;
+               /* Class clazz = FileInputStream.class;
                 Field field = clazz.getDeclaredField("path");
                 field.setAccessible(true);
-              String path = (String) field.get(inputStream);
-              //Log.d("pathxx",path);
-              //return "";
-                return path;
+              String path = (String) field.get(inputStream);*/
+              return "";
 
             }
         }catch (Throwable throwable){
