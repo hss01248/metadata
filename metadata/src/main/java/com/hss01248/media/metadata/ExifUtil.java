@@ -13,6 +13,8 @@ import android.util.Log;
 
 import com.hss01248.media.metadata.quality.Magick;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -45,12 +47,65 @@ public class ExifUtil {
     }
 
     public static String getExifStr(InputStream inputStream){
+        String fileSize = "";
+        String wh = "";
+        String quality = "";
+        String path = "";
+        try {
+             fileSize = formatFileSize(inputStream.available());
+             path = getPathFromStream(inputStream);
+
+
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            byte[] buffer = new byte[4096];
+            long count = 0;
+            int n = 0;
+            while (-1 != (n = inputStream.read(buffer))) {
+                output.write(buffer, 0, n);
+                count += n;
+            }
+            byte[] bytes = output.toByteArray();
+            try {
+                inputStream.close();
+            }catch (Throwable throwable){
+
+            }
+
+            inputStream = new ByteArrayInputStream(bytes);
+            wh = formatWh(new ByteArrayInputStream(bytes));
+            quality = new Magick().getJPEGImageQuality(new ByteArrayInputStream(bytes))+"";
+
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
         Map<String,String> map = new TreeMap<>(readExif(inputStream));
         for (Map.Entry<String, String> stringStringEntry : map.entrySet()) {
             stringStringEntry.setValue(stringfySomeTag(stringStringEntry.getKey(),stringStringEntry.getValue()));
         }
+        map.put("0-wh",wh);
+        map.put("0-quality",quality);
+        map.put("0-fileSize",fileSize);
         String str =  map.toString().replaceAll(",","\n");
         return str;
+    }
+
+    private static String getPathFromStream(InputStream inputStream) {
+        try {
+            if(inputStream instanceof FileInputStream){
+                //Accessing hidden field Ljava/io/FileInputStream;->path:Ljava/lang/String; (greylist-max-o, reflection, denied)
+//java.lang.NoSuchFieldException: No field path in class Ljava/io/FileInputStream; (declaration of 'java.io.FileInputStream' appears in /apex/com.android.runtime/javalib/core-oj.jar)
+               /* Class clazz = FileInputStream.class;
+                Field field = clazz.getDeclaredField("path");
+                field.setAccessible(true);
+              String path = (String) field.get(inputStream);*/
+              return "";
+
+            }
+        }catch (Throwable throwable){
+            throwable.printStackTrace();
+        }
+
+        return "";
     }
 
     public static String getExifStr(String path){
@@ -61,7 +116,7 @@ public class ExifUtil {
             exifMap.put("00-path",path);
             exifMap.put("0-fileSize",formatFileSize(file.length()));
 
-            exifMap.put("0-wh",formatWh(file));
+            exifMap.put("0-wh",formatWh(new FileInputStream(path)));
 
             exifMap.put("0-quality",new Magick().getJPEGImageQuality(new FileInputStream(file))+"");
         }catch (Throwable throwable){
@@ -106,16 +161,11 @@ public class ExifUtil {
                         }else {
                             //w("field not string:"+obj);
                         }
-
                     }catch (Throwable throwable){
                         exception("dd",throwable);
                     }
                 }
             }
-
-
-
-
         } catch (Exception e) {
             exception("dd",e);
         }finally {
@@ -131,13 +181,19 @@ public class ExifUtil {
         }
     }
 
-    private static String formatWh(File file) {
+    private static String formatWh(InputStream inputStream) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         try {
-            BitmapFactory.decodeFile(file.getAbsolutePath(),options);
+            BitmapFactory.decodeStream(inputStream,new Rect(),options);
         } catch (Throwable e) {
             e.printStackTrace();
+        }finally {
+            try {
+                inputStream.close();
+            }catch (Throwable e){
+
+            }
         }
         /**
          *options.outHeight为原始图片的高
@@ -147,7 +203,7 @@ public class ExifUtil {
 
     }
 
-    private static String formatFileSize(long size) {
+     static String formatFileSize(long size) {
         try {
             DecimalFormat dff = new DecimalFormat(".00");
             if (size >= 1024 * 1024) {
@@ -261,7 +317,7 @@ public class ExifUtil {
                 return;
             }
             resetImageWHToMap(exifMap,getInputStream(file),true);
-            ExifInterface exif = new ExifInterface(file);
+            ExifInterface exif = new ExifInterface(getInputStream(file));
             Iterator<Map.Entry<String,String>> it = exifMap.entrySet().iterator();
             while (it.hasNext()){
                 Map.Entry<String,String> entry = it.next();
@@ -313,6 +369,12 @@ public class ExifUtil {
 
         }catch (Throwable throwable){
             exception("setAttribute",throwable);
+        }finally {
+            try {
+                stream.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

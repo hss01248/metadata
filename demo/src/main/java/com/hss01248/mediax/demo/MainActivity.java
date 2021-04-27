@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import com.hss01248.media.metadata.ExifUtil;
@@ -16,35 +17,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
 public class MainActivity extends AppCompatActivity {
-
+    TextView textView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        TextView textView = findViewById(R.id.tv);
-        TakePhotoUtil.startPickOneWitchDialog(this, new TakeOnePhotoListener() {
-            @Override
-            public void onSuccess(String path) {
-                try {
-                    String str =  ExifUtil.getExifStr(path);
-                    Log.d("d",str);
-                    textView.setText(str);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+         textView = findViewById(R.id.tv);
 
-            }
-
-            @Override
-            public void onFail(String path, String msg) {
-
-            }
-
-            @Override
-            public void onCancel() {
-
-            }
-        });
 
 
         /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -95,5 +74,34 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });*/
+    }
+
+    public void select(View view) {
+        TakePhotoUtil.startPickOneWitchDialog(this, new TakeOnePhotoListener() {
+            @Override
+            public void onSuccess(String path) {
+                try {
+                    long start = System.currentTimeMillis();
+                    String str =  ExifUtil.getExifStr(new FileInputStream(path));
+                    //Log.d("d",str);
+                    String cost = "getExifStr cost:"+(System.currentTimeMillis() - start)+"ms\n";
+                    str = cost + str;
+                    textView.setText(str);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+            @Override
+            public void onFail(String path, String msg) {
+
+            }
+
+            @Override
+            public void onCancel() {
+
+            }
+        });
     }
 }
