@@ -90,6 +90,98 @@ public class ExifUtil {
         return str;
     }
 
+    public static Map<String,String> getBasicMap(InputStream inputStream){
+        String fileSize = "";
+        String wh = "";
+        String quality = "";
+        String path = "";
+        String type = "";
+        Map<String,String> map = new TreeMap<>();
+        try {
+            fileSize = formatFileSize(inputStream.available());
+            path = getPathFromStream(inputStream);
+
+
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            byte[] buffer = new byte[4096];
+            long count = 0;
+            int n = 0;
+            while (-1 != (n = inputStream.read(buffer))) {
+                output.write(buffer, 0, n);
+                count += n;
+            }
+            byte[] bytes = output.toByteArray();
+            try {
+                inputStream.close();
+            }catch (Throwable throwable){
+
+            }
+
+            inputStream = new ByteArrayInputStream(bytes);
+            type = FileTypeUtil.getType(inputStream);
+
+            if("jpg".equals(type)){
+                quality = new Magick().getJPEGImageQuality(new ByteArrayInputStream(bytes))+"";
+                map.put("0-quality",quality);
+            }
+            if(FileTypeUtil.getMimeByType(type).contains("image")){
+                wh = formatWh(new ByteArrayInputStream(bytes));
+                map.put("0-wh",wh);
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+
+        //for (Map.Entry<String, String> stringStringEntry : map.entrySet()) {
+        //stringStringEntry.setValue(stringfySomeTag(stringStringEntry.getKey(),stringStringEntry.getValue()));
+        // }
+        map.put("00-path",path);
+        map.put("00-realType",type);
+        map.put("0-fileSize",fileSize);
+        return map;
+    }
+
+    public static Map<String,String> getBasicMap(String filePath){
+        String fileSize = "";
+        String wh = "";
+        String quality = "";
+        String path = "";
+        String type = "";
+        File file = new File(filePath);
+        Map<String,String> map = new TreeMap<>();
+        try {
+            fileSize = formatFileSize(file.length());
+            path = filePath;
+
+
+
+            type = FileTypeUtil.getType(file);
+
+            if("jpg".equals(type)){
+                quality = new Magick().getJPEGImageQuality(new FileInputStream(file))+"";
+                map.put("0-quality",quality);
+            }
+            if(FileTypeUtil.getMimeByType(type).contains("image")){
+                wh = formatWh(new FileInputStream(file));
+                map.put("0-wh",wh);
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+
+        //for (Map.Entry<String, String> stringStringEntry : map.entrySet()) {
+        //stringStringEntry.setValue(stringfySomeTag(stringStringEntry.getKey(),stringStringEntry.getValue()));
+        // }
+        map.put("00-path",path);
+        map.put("00-realType",type);
+        map.put("0-fileSize",fileSize);
+        return map;
+    }
+
+
+
+
+
     private static String getPathFromStream(InputStream inputStream) {
         try {
             if(inputStream instanceof FileInputStream){
@@ -223,7 +315,7 @@ public class ExifUtil {
         return String.valueOf(size);
     }
 
-    private static String stringfySomeTag(String tag, String val) {
+     static String stringfySomeTag(String tag, String val) {
         if(ExifInterface.TAG_GPS_LATITUDE.equals(tag) || ExifInterface.TAG_GPS_LONGITUDE.equals(tag)){
             try {
                 return parseGps(val);

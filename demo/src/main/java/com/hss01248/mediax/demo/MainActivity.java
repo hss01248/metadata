@@ -8,13 +8,18 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import com.hss01248.image.dataforphotoselet.ImgDataSeletor;
 import com.hss01248.media.metadata.ExifUtil;
+import com.hss01248.media.metadata.MetaDataUtil;
 
 import org.devio.takephoto.wrap.TakeOnePhotoListener;
 import org.devio.takephoto.wrap.TakePhotoUtil;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+
+import cn.qqtheme.framework.picker.FilePicker;
 
 public class MainActivity extends AppCompatActivity {
     TextView textView;
@@ -22,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-         textView = findViewById(R.id.tv);
+         textView = findViewById(R.id.tv_desc);
 
 
 
@@ -103,5 +108,31 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    public void selectfile(View view) {
+
+        ImgDataSeletor.startPickOneWitchDialog(this, new TakeOnePhotoListener() {
+            @Override
+            public void onSuccess(String path) {
+                long start = System.currentTimeMillis();
+                String des = MetaDataUtil.getDes(path);
+                String cost = "getExifStr cost:"+(System.currentTimeMillis() - start)+"ms\n";
+                des = cost + des;
+                textView.setText(des);
+            }
+
+            @Override
+            public void onFail(String path, String msg) {
+
+            }
+
+            @Override
+            public void onCancel() {
+
+            }
+        });
+
+
     }
 }

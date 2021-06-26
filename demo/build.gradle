@@ -40,5 +40,7 @@ dependencies {
     api project(':metadata')
     //api project(':myMediaStore')
     implementation 'com.facebook.stetho:stetho:1.5.1'
-    implementation 'com.github.skyNet2017:TakePhoto:4.2.1'
+
+
+    implementation 'com.github.skyNet2017.Luban:dataForPhotoSelet:3.1.9'
 }
