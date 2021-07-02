@@ -18,14 +18,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 
 
@@ -84,7 +88,7 @@ public class ExifUtil {
         }
         map.put("00-path",path);
         map.put("0-wh",wh);
-        map.put("0-quality",quality);
+        map.put("0-jpg-quality",quality);
         map.put("0-fileSize",fileSize);
         String str =  map.toString().replaceAll(",","\n");
         return str;
@@ -122,7 +126,7 @@ public class ExifUtil {
 
             if("jpg".equals(type)){
                 quality = new Magick().getJPEGImageQuality(new ByteArrayInputStream(bytes))+"";
-                map.put("0-quality",quality);
+                map.put("0-jpg-quality",quality);
             }
             if(FileTypeUtil.getMimeByType(type).contains("image")){
                 wh = formatWh(new ByteArrayInputStream(bytes));
@@ -159,7 +163,9 @@ public class ExifUtil {
 
             if("jpg".equals(type)){
                 quality = new Magick().getJPEGImageQuality(new FileInputStream(file))+"";
-                map.put("0-quality",quality);
+                map.put("0-jpg-quality",quality);
+                String tail = readJpgTail(filePath);
+                map.put("0-jpg-tail",tail);
             }
             if(FileTypeUtil.getMimeByType(type).contains("image")){
                 wh = formatWh(new FileInputStream(file));
@@ -210,7 +216,7 @@ public class ExifUtil {
 
             exifMap.put("0-wh",formatWh(new FileInputStream(path)));
 
-            exifMap.put("0-quality",new Magick().getJPEGImageQuality(new FileInputStream(file))+"");
+            exifMap.put("0-jpg-quality",new Magick().getJPEGImageQuality(new FileInputStream(file))+"");
         }catch (Throwable throwable){
             throwable.printStackTrace();
         }
@@ -480,4 +486,110 @@ public class ExifUtil {
         }
         return context.getContentResolver().openInputStream(Uri.parse(source));
     }
+
+    private static boolean appJpgTail(String path,String text) {
+
+
+        Log.w("mark","write mark in end:"+text);
+        //UTF-8 编码中，一个英文字为一个字节，一个中文为三个字节。
+        byte[] bytes = text.getBytes(Charset.forName("UTF-8"));
+        File file = new File(path);
+        try {
+            RandomAccessFile accessFile = new RandomAccessFile(file,"rw");
+            accessFile.seek(file.length());
+            accessFile.write(bytes);
+            return true;
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static String readJpgTail(String path){
+        try {
+            appJpgTail(path,"i am jpg tail-->random num:"+new Random().nextInt(1000));
+            String last2Bytes = readTail2Byte2Hex(path);
+            Log.d("jpg","last 2:"+last2Bytes);
+            if("FFD9".equals(last2Bytes)){
+                return "";
+            }
+            //逆向读文件
+            RandomAccessFile in = new RandomAccessFile(path, "r");
+            int pre = 0;
+            int current;
+            long jpgEndIdx = -1;
+
+            for(long p = in.length() - 1; p >= 0; p--) {
+                in.seek(p);
+                current = in.read();
+                //Log.i("jpg","hex:-->"+byteToHex((byte) current));
+                if(pre == 0){
+                    pre = current;
+                    continue;
+                }
+                if(byteToHex((byte) pre).toUpperCase().endsWith("D9")){
+                    if(byteToHex((byte) current).toUpperCase().endsWith("FF")){
+                        jpgEndIdx = p;
+                        Log.v("jpg","file tail ffd9:"+jpgEndIdx+",file lenth:"+new File(path).length());
+                        break;
+                    }
+                }
+                pre = current;
+            }
+            in.seek(jpgEndIdx+2);
+            long tailLen = in.length() - jpgEndIdx-2;
+            byte[] bytes = new byte[(int) tailLen];
+            in.read(bytes);
+            String str = new String(bytes,"UTF-8");
+            //Log.w("mark","last  bytes in end:"+str);
+            return str;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    private static String  readTail2Byte2Hex(String result) {
+        byte[] bytes = new byte[2];
+        File file = new File(result);
+        try {
+            RandomAccessFile accessFile = new RandomAccessFile(file,"rw");
+            accessFile.seek(file.length()-2);
+            accessFile.read(bytes);
+           return bytes2HexString(bytes,true);
+        } catch (Throwable e) {
+           return "";
+        }
+    }
+
+    private static final char[] HEX_DIGITS_UPPER =
+            {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    private static final char[] HEX_DIGITS_LOWER =
+            {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+    public static String bytes2HexString(final byte[] bytes, boolean isUpperCase) {
+        if (bytes == null) return "";
+        char[] hexDigits = isUpperCase ? HEX_DIGITS_UPPER : HEX_DIGITS_LOWER;
+        int len = bytes.length;
+        if (len <= 0) return "";
+        char[] ret = new char[len << 1];
+        for (int i = 0, j = 0; i < len; i++) {
+            ret[j++] = hexDigits[bytes[i] >> 4 & 0x0f];
+            ret[j++] = hexDigits[bytes[i] & 0x0f];
+        }
+        return new String(ret);
+    }
+
+
+
+
+    public static String byteToHex(byte b){
+        String hex = Integer.toHexString(b & 0xFF);
+        if(hex.length() < 2){
+            hex = "0" + hex;
+        }
+        return hex;
+    }
+
 }

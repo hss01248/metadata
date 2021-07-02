@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import com.blankj.utilcode.util.GsonUtils;
 import com.hss01248.image.dataforphotoselet.ImgDataSeletor;
 import com.hss01248.media.metadata.ExifUtil;
 import com.hss01248.media.metadata.MetaDataUtil;
@@ -87,7 +88,8 @@ public class MainActivity extends AppCompatActivity {
             public void onSuccess(String path) {
                 try {
                     long start = System.currentTimeMillis();
-                    String str =  ExifUtil.getExifStr(new FileInputStream(path));
+                   // String str =  ExifUtil.getExifStr(new FileInputStream(path));
+                    String str =  GsonUtils.toJson(ExifUtil.getBasicMap(path));
                     //Log.d("d",str);
                     String cost = "getExifStr cost:"+(System.currentTimeMillis() - start)+"ms\n";
                     str = cost + str;
