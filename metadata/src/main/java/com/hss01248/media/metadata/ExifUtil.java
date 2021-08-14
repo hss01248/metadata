@@ -164,8 +164,8 @@ public class ExifUtil {
             if("jpg".equals(type)){
                 quality = new Magick().getJPEGImageQuality(new FileInputStream(file))+"";
                 map.put("0-jpg-quality",quality);
-                String tail = readJpgTail(filePath);
-                map.put("0-jpg-tail",tail);
+                /*String tail = readJpgTail(filePath);
+                map.put("0-jpg-tail",tail);*/
             }
             if(FileTypeUtil.getMimeByType(type).contains("image")){
                 wh = formatWh(new FileInputStream(file));
