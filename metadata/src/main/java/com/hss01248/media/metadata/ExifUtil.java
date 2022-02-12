@@ -190,7 +190,7 @@ public class ExifUtil {
         map.put("00-realType",type);
         map.put("0-fileSize",fileSize);
         if(format ==  null){
-            format = new SimpleDateFormat("yyyy-MM-ss HH:mm:ss");
+            format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         }
         map.put("0-lastModified", format.format(new Date(file.lastModified())));
         return map;

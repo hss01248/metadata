@@ -1,10 +1,21 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
+   // apply from: 'https://raw.githubusercontent.com/hss01248/flipperUtil/master/deps/uploadAllTask.gradle'
+
+  /*  ext {
+// 快照版需要在版本号后面加-SNAPSHOT
+        //groupId='com.xxx.yyy.mylib'
+        groupId='com.github.hss01248.metadata'
+        versionCode = '2.0.0.02'
+        isPublisToLocal=true
+
+    }*/
     repositories {
         google()
         jcenter()
         mavenCentral() // add repository
     }
+
     dependencies {
         classpath "com.android.tools.build:gradle:4.1.0"
         classpath 'org.greenrobot:greendao-gradle-plugin:3.3.0' // add plugin
