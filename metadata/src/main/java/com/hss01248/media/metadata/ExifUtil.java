@@ -10,6 +10,7 @@ import android.graphics.Rect;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.TimeUtils;
 
 import com.hss01248.media.metadata.quality.Magick;
 
@@ -25,9 +26,12 @@ import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
@@ -145,12 +149,16 @@ public class ExifUtil {
         return map;
     }
 
+    static SimpleDateFormat format;
     public static Map<String,String> getBasicMap(String filePath){
         String fileSize = "";
         String wh = "";
         String quality = "";
         String path = "";
         String type = "";
+        /*if(filePath.startsWith("content://")){
+
+        }*/
         File file = new File(filePath);
         Map<String,String> map = new TreeMap<>();
         try {
@@ -181,6 +189,10 @@ public class ExifUtil {
         map.put("00-path",path);
         map.put("00-realType",type);
         map.put("0-fileSize",fileSize);
+        if(format ==  null){
+            format = new SimpleDateFormat("yyyy-MM-ss HH:mm:ss");
+        }
+        map.put("0-lastModified", format.format(new Date(file.lastModified())));
         return map;
     }
 

@@ -48,7 +48,7 @@ public class MetaDataUtil {
             for (Map.Entry<String, String> stringStringEntry : data.entrySet()) {
                 stringStringEntry.setValue(ExifUtil.stringfySomeTag(stringStringEntry.getKey(),stringStringEntry.getValue()));
             }
-        }else if(mimetype.contains("video")){
+        }else if(mimetype.contains("video") || mimetype.contains("audio")){
             data.putAll(getAllInfo(path));
         }else if("gz".equals(FileTypeUtil.getType(new File(path)))){
             //解压缩
