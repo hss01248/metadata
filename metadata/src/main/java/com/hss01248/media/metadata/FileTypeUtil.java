@@ -3,6 +3,7 @@ package com.hss01248.media.metadata;
 
 
 
+import android.text.TextUtils;
 import android.webkit.MimeTypeMap;
 
 import java.io.File;
@@ -90,7 +91,11 @@ public class FileTypeUtil {
     }
 
     public static String getMimeByType(String typeOrSuffix){
-        return MimeTypeMap.getSingleton().getMimeTypeFromExtension(typeOrSuffix);
+        String str  =  MimeTypeMap.getSingleton().getMimeTypeFromExtension(typeOrSuffix);
+        if(TextUtils.isEmpty(str)){
+            return "";
+        }
+        return str;
     }
 
   public   static String getMineType(String filePath) {
@@ -107,7 +112,10 @@ public class FileTypeUtil {
             MimeTypeMap mime = MimeTypeMap.getSingleton();
             type = mime.getMimeTypeFromExtension(extension);
         }
-        return type;
+      if(TextUtils.isEmpty(type)){
+          return "";
+      }
+      return type;
 
 
        /* MediaMetadataRetriever mmr = new MediaMetadataRetriever();
@@ -353,7 +361,10 @@ public class FileTypeUtil {
 
     private static void close(FileInputStream in) {
         try {
-            in.close();
+            if(in != null){
+                in.close();
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
