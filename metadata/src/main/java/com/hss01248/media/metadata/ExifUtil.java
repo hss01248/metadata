@@ -161,38 +161,48 @@ public class ExifUtil {
         }*/
         File file = new File(filePath);
         Map<String,String> map = new TreeMap<>();
+        map.put("00-path",path);
+        map.put("00-exist",file.exists()+"");
+        if(!file.exists()){
+            return map;
+        }
+        if(format ==  null){
+            format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        }
+        map.put("00-lastModified", format.format(new Date(file.lastModified())));
+        map.put("00-isDir",file.isDirectory()+"");
+        if(file.isDirectory()){
+            String[]  list = file.list();
+            if(list == null || list.length ==0){
+                map.put("00-subFilesCount","0");
+            }else {
+                map.put("00-subFilesCount",list.length+"");
+            }
+            return map;
+        }
         try {
             fileSize = formatFileSize(file.length());
-            path = filePath;
-
-
-
             type = FileTypeUtil.getType(file);
-
-            if("jpg".equals(type)){
-                quality = new Magick().getJPEGImageQuality(new FileInputStream(file))+"";
-                map.put("0-jpg-quality",quality);
+            if(!TextUtils.isEmpty(type)){
+                if("jpg".equals(type)){
+                    quality = new Magick().getJPEGImageQuality(new FileInputStream(file))+"";
+                    map.put("0-jpg-quality",quality);
                 /*String tail = readJpgTail(filePath);
                 map.put("0-jpg-tail",tail);*/
-            }
-            if(FileTypeUtil.getMimeByType(type).contains("image")){
-                wh = formatWh(new FileInputStream(file));
-                map.put("0-wh",wh);
+                }else if("gif".equals(type)){
+                    //todo 大小,多少帧
+                }
+                if(FileTypeUtil.getMimeByType(type).contains("image")){
+                    wh = formatWh(new FileInputStream(file));
+                    map.put("0-wh",wh);
+                }
             }
         } catch (Throwable e) {
             e.printStackTrace();
         }
-
-        //for (Map.Entry<String, String> stringStringEntry : map.entrySet()) {
-        //stringStringEntry.setValue(stringfySomeTag(stringStringEntry.getKey(),stringStringEntry.getValue()));
-        // }
-        map.put("00-path",path);
         map.put("00-realType",type);
-        map.put("0-fileSize",fileSize);
-        if(format ==  null){
-            format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        }
-        map.put("0-lastModified", format.format(new Date(file.lastModified())));
+        map.put("00-fileSize",fileSize);
+
         return map;
     }
 

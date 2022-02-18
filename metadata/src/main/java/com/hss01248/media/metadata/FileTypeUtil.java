@@ -349,6 +349,9 @@ public class FileTypeUtil {
     public static String getType(File file)  {
         FileInputStream in = null;
         try {
+            if(!file.exists()){
+                return "";
+            }
             in = new FileInputStream(file);
             return getType(in, file.getName());
         }catch (Throwable throwable){
