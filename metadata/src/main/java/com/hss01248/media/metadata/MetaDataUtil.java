@@ -4,12 +4,16 @@ import android.media.MediaMetadataRetriever;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.exifinterface.media.ExifInterface;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.internal.bind.JsonAdapterAnnotationTypeAdapterFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -39,22 +43,65 @@ public class MetaDataUtil {
             e.printStackTrace();
         }
         data.put("00-ext",FileTypeUtil.extName(path));
-        if(TextUtils.isEmpty(data.get("00-path"))){
-            data.put("00-path",path);
+
+        if("true".equals(data.get("00-exist"))){
+            if(mimetype.contains("image")){
+                data.putAll(ExifUtil.readExif(path));
+                for (Map.Entry<String, String> stringStringEntry : data.entrySet()) {
+                    stringStringEntry.setValue(ExifUtil.stringfySomeTag(stringStringEntry.getKey(),stringStringEntry.getValue()));
+                }
+            }else if(mimetype.contains("video") || mimetype.contains("audio")){
+                data.putAll(getAllInfo(path));
+            }else if("gz".equals(FileTypeUtil.getType(new File(path)))){
+                //解压缩
+            }
         }
 
-        if(mimetype.contains("image")){
-            data.putAll(ExifUtil.readExif(path));
-            for (Map.Entry<String, String> stringStringEntry : data.entrySet()) {
-                stringStringEntry.setValue(ExifUtil.stringfySomeTag(stringStringEntry.getKey(),stringStringEntry.getValue()));
-            }
-        }else if(mimetype.contains("video") || mimetype.contains("audio")){
-            data.putAll(getAllInfo(path));
-        }else if("gz".equals(FileTypeUtil.getType(new File(path)))){
-            //解压缩
-        }
         return data;
 
+    }
+
+    public static String getMediaTime(String path){
+        File file = new File(path);
+        if(!file.exists()){
+            return "";
+        }
+        String type = FileTypeUtil.getType(file);
+        if(type.equals("image")){
+            try {
+                ExifInterface exif = new ExifInterface(file);
+                //YYYY-MM-DD HH:MM:SS
+               String str =  exif.getAttribute(ExifInterface.TAG_DATETIME);
+               if(TextUtils.isEmpty(str)){
+                   //YYYY:MM:DD HH:MM:SS
+                   str =  exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL);
+               }
+                if(TextUtils.isEmpty(str)){
+                    //YYYY:MM:DD HH:MM:SS
+                    str =  exif.getAttribute(ExifInterface.TAG_DATETIME_DIGITIZED);
+                }
+                if(TextUtils.isEmpty(str)){
+                    return "";
+                }
+                return str;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }else if(type.contains("video")){
+            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+            retriever.setDataSource(path);
+            //20220216T105033.000Z
+            //YYYYMMDDTHHMMSS.mmmZ
+            //19040101T000000.000Z == 0
+          String str =   retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE);
+            if(TextUtils.isEmpty(str)){
+                return "";
+            }
+
+            return str;
+        }
+        return "";
     }
 
 
@@ -72,6 +119,13 @@ public class MetaDataUtil {
         Map<String,String> metadatas = new TreeMap<>();
         String key = "METADATA_KEY_";
         try {
+            if(fields == null){
+                return metadatas;
+            }
+            if(!new File(path).exists()){
+                Log.w("meta","MediaMetadataRetriever -file not exist "+path);
+                return metadatas;
+            }
             //没有权限时,crash
             retriever.setDataSource(path);
             for (Field field : fields) {
