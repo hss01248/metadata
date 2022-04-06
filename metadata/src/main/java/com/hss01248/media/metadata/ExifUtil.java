@@ -154,7 +154,7 @@ public class ExifUtil {
         String fileSize = "";
         String wh = "";
         String quality = "";
-        String path = "";
+        String path = filePath;
         String type = "";
         /*if(filePath.startsWith("content://")){
 
@@ -186,7 +186,7 @@ public class ExifUtil {
         //for (Map.Entry<String, String> stringStringEntry : map.entrySet()) {
         //stringStringEntry.setValue(stringfySomeTag(stringStringEntry.getKey(),stringStringEntry.getValue()));
         // }
-        map.put("00-path",path);
+        map.put("00-path",filePath);
         map.put("00-realType",type);
         map.put("0-fileSize",fileSize);
         if(format ==  null){
