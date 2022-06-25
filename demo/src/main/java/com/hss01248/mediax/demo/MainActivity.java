@@ -19,6 +19,10 @@ import org.devio.takephoto.wrap.TakePhotoUtil;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import cn.qqtheme.framework.picker.FilePicker;
 
@@ -136,5 +140,33 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+    }
+
+    public void findDateByFileName(View view) {
+        List<File> files = new ArrayList<>();
+        String root = "/storage/xxxx/";
+        files.add(new File(root+"VID_20210302_16304170-xxxx.mp4"));
+        files.add(new File(root+"Screenshot_20190619_105917_包名.jpg"));
+        files.add(new File(root+"20190619_105917.jpg"));
+        files.add(new File(root+"2019-06-19_10-59-17_2545184214851555.jpg"));
+        files.add(new File(root+"2019-06-19-10-59-17-xxxx.jpg"));
+        files.add(new File(root+"IMG_20190619_105917.jpg"));
+        files.add(new File(root+"IMG_2019pi0619_105917.jpg"));
+         SimpleDateFormat sdf = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+        for (File file : files) {
+            try {
+                long time = MetaDataUtil.timeGuessFromFileName(file.getAbsolutePath(),file,"");
+                Log.i("final data",sdf.format(new Date(time))) ;
+            }catch (Throwable throwable){
+                throwable.printStackTrace();
+            }
+
+        }
+        //VID_20210302_16304170-xxxx.mp4
+        //Screenshot_20190619_105917_包名.jpg/png
+        //20190619_105917.jpg
+        //2019-06-19_10-59-17_2545184214851555.jpg
+        //2019-06-19-10-59-17-xxxx.jpg
+        //IMG_20190619_105917.jpg
     }
 }

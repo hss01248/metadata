@@ -25,10 +25,18 @@
             android:onClick="selectfile"
             android:text="选择文件"
             android:layout_height="wrap_content"/>
+        <Button
+            android:layout_width="match_parent"
+            android:text="findDateByFileName"
+            android:textAllCaps="false"
+            android:onClick="findDateByFileName"
+            android:layout_height="wrap_content"/>
         <TextView
             android:layout_width="match_parent"
             android:id="@+id/tv_desc"
             android:layout_height="wrap_content"/>
+
+
 
     </LinearLayout>
     </ScrollView>
