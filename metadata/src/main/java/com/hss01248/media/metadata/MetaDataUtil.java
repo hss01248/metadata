@@ -116,7 +116,7 @@ public class MetaDataUtil {
      */
     public static long getMediaCreateTime(String path) {
         File file = new File(path);
-        if (file.exists()) {
+        if (!file.exists()) {
             return 0;
         }
         if (file.isDirectory()) {
