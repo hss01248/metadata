@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.hss01248.mediax.demo">
+    <uses-sdk tools:overrideLibrary="com.hss01248.media,com.hss.utils.enhance,com.lxj.xpopup,com.hss01248.toast,com.hss01248.viewstate"/>
 
     <application
         android:allowBackup="true"
@@ -9,6 +11,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:name=".MyApp"
+        android:usesCleartextTraffic="true"
         android:requestLegacyExternalStorage="true"
         android:theme="@style/Theme.MetaDataDemo">
         <activity android:name=".MainActivity">

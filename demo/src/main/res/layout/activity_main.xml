@@ -23,7 +23,28 @@
         <Button
             android:layout_width="match_parent"
             android:onClick="selectfile"
-            android:text="选择文件"
+            android:text="选择文件-path"
+            android:layout_height="wrap_content"/>
+        <Button
+            android:layout_width="match_parent"
+            android:onClick="pickBySys"
+            android:text="选择图片视频文件-uri-系统intent"
+            android:layout_height="wrap_content"/>
+        <Button
+            android:layout_width="match_parent"
+            android:onClick="pickBySys2"
+            android:text="选择通用文件-uri-系统intent"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:onClick="httpImage"
+            android:text="http图片"
+            android:layout_height="wrap_content"/>
+        <Button
+            android:layout_width="match_parent"
+            android:onClick="httpVideo"
+            android:text="http视频"
             android:layout_height="wrap_content"/>
         <Button
             android:layout_width="match_parent"

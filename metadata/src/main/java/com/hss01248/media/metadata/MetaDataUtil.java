@@ -1,24 +1,20 @@
 package com.hss01248.media.metadata;
 
 import android.media.MediaMetadataRetriever;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.exifinterface.media.ExifInterface;
 
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -35,7 +31,13 @@ public class MetaDataUtil {
     public static String getDes(String path) {
         return new GsonBuilder().setPrettyPrinting().create().toJson(getMetaData(path));
     }
+    public static String getDes2(Uri uri){
+        return new GsonBuilder().setPrettyPrinting().create().toJson(getMetaData2(uri));
+    }
 
+    public static MetaInfo getMetaData2(Uri uri){
+        return MetaInfo.parse(uri);
+    }
     public static Map<String, String> getMetaData(String path) {
         String mimetype = FileTypeUtil.getMineType(path);
         Map<String, String> data = new TreeMap<>();
@@ -137,7 +139,7 @@ public class MetaDataUtil {
                 return timeFromExif;
             }
         }
-        long timeFromFileName = timeGuessFromFileName(path,file,mimetype);
+        long timeFromFileName = timeGuessFromFileName(file.getName());
         if(timeFromFileName > 0){
             return timeFromFileName;
         }
@@ -145,8 +147,7 @@ public class MetaDataUtil {
     }
 
     static SimpleDateFormat sdfFile = new SimpleDateFormat("yyyyMMddHHmmss");
-    public static long timeGuessFromFileName(String path, File file, String mimetype) {
-        String name = file.getName();
+    public static long timeGuessFromFileName(String name) {
         //VID_20210302_16304170-xxxx.mp4
         //Screenshot_20190619_105917_包名.jpg/png
         //20190619_105917.jpg
@@ -194,7 +195,7 @@ public class MetaDataUtil {
      * @param map
      * @return
      */
-    private static long timeFromMeta(Map<String, String> map) {
+     static long timeFromMeta(Map<String, String> map) {
         if(map == null || !map.containsKey("date")){
             return 0;
         }
@@ -232,7 +233,8 @@ public class MetaDataUtil {
     private static final int DATETIME_VALUE_STRING_LENGTH = 19;
 
     static SimpleDateFormat sdf = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
-    private static long timeFromExif(Map<String, String> map) {
+
+     static long timeFromExif(Map<String, String> map) {
         if (map == null || map.isEmpty()) {
             return 0;
         }

@@ -1,30 +1,39 @@
 package com.hss01248.mediax.demo;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.Manifest;
+import android.app.Dialog;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.blankj.utilcode.util.GsonUtils;
+import com.blankj.utilcode.util.LogUtils;
+import com.blankj.utilcode.util.PermissionUtils;
+import com.blankj.utilcode.util.ThreadUtils;
+import com.blankj.utilcode.util.ToastUtils;
+import com.hss.utils.enhance.api.MyCommonCallback;
 import com.hss01248.image.dataforphotoselet.ImgDataSeletor;
 import com.hss01248.media.metadata.ExifUtil;
 import com.hss01248.media.metadata.MetaDataUtil;
+import com.hss01248.media.pick.MediaPickOrCaptureUtil;
+import com.hss01248.media.pick.MediaPickUtil;
+import com.hss01248.permission.MyPermissions;
+import com.hss01248.toast.MyToast;
 
 import org.devio.takephoto.wrap.TakeOnePhotoListener;
 import org.devio.takephoto.wrap.TakePhotoUtil;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import cn.qqtheme.framework.picker.FilePicker;
 
 public class MainActivity extends AppCompatActivity {
     TextView textView;
@@ -33,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
          textView = findViewById(R.id.tv_desc);
+
 
 
 
@@ -58,6 +68,25 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });*/
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            MyPermissions.requestByMostEffort(false, true
+                    , new PermissionUtils.FullCallback() {
+                        @Override
+                        public void onGranted(@NonNull List<String> granted) {
+
+                        }
+
+                        @Override
+                        public void onDenied(@NonNull List<String> deniedForever, @NonNull List<String> denied) {
+
+                        }
+                    }, Manifest.permission.ACCESS_MEDIA_LOCATION);
+        }
     }
 
     @Override
@@ -115,17 +144,45 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+    Dialog dialog;
+    private void showDesc(boolean userUri,String uri){
+        LogUtils.i(uri);
+        long start = System.currentTimeMillis();
+
+        if(uri.startsWith("http")){
+             dialog = MyToast.showLoadingDialog("");
+        }
+
+        ThreadUtils.executeByIo(new ThreadUtils.SimpleTask<String>() {
+            @Override
+            public String doInBackground() throws Throwable {
+               return userUri ?  MetaDataUtil.getDes2(Uri.parse(uri)) : MetaDataUtil.getDes(uri);
+            }
+
+            @Override
+            public void onSuccess(String result) {
+                if(dialog != null) dialog.dismiss();
+                String cost = "getExifStr cost:"+(System.currentTimeMillis() - start)+"ms\n";
+               String  des = cost + result;
+                textView.setText(des);
+            }
+
+            @Override
+            public void onFail(Throwable t) {
+                super.onFail(t);
+                if(dialog != null) dialog.dismiss();
+                LogUtils.w(t);
+                ToastUtils.showLong(t.getMessage());
+            }
+        });
+    }
 
     public void selectfile(View view) {
 
         ImgDataSeletor.startPickOneWitchDialog(this, new TakeOnePhotoListener() {
             @Override
             public void onSuccess(String path) {
-                long start = System.currentTimeMillis();
-                String des = MetaDataUtil.getDes(path);
-                String cost = "getExifStr cost:"+(System.currentTimeMillis() - start)+"ms\n";
-                des = cost + des;
-                textView.setText(des);
+                showDesc(false,path);
             }
 
             @Override
@@ -155,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
          SimpleDateFormat sdf = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
         for (File file : files) {
             try {
-                long time = MetaDataUtil.timeGuessFromFileName(file.getAbsolutePath(),file,"");
+                long time = MetaDataUtil.timeGuessFromFileName(file.getName());
                 Log.i("final data",sdf.format(new Date(time))) ;
             }catch (Throwable throwable){
                 throwable.printStackTrace();
@@ -168,5 +225,36 @@ public class MainActivity extends AppCompatActivity {
         //2019-06-19_10-59-17_2545184214851555.jpg
         //2019-06-19-10-59-17-xxxx.jpg
         //IMG_20190619_105917.jpg
+    }
+
+    public void pickBySys(View view) {
+        MediaPickOrCaptureUtil.pickOrCaptureImageOrVideo(15, new MyCommonCallback<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                showDesc(true,uri.toString());
+            }
+        });
+
+    }
+
+    public void httpImage(View view) {
+        String url2 = "http://examples-1251000004.cos.ap-shanghai.myqcloud.com/sample.jpeg";
+        String url = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Exif_JPEG_PICTURE_%2824999915302%29.jpg/800px-Exif_JPEG_PICTURE_%2824999915302%29.jpg?20180503235201";
+        showDesc(true,url2);
+
+    }
+
+    public void httpVideo(View view) {
+        String url = "https://www.runoob.com/try/demo_source/mov_bbb.mp4";
+        showDesc(true,url);
+    }
+
+    public void pickBySys2(View view) {
+        MediaPickUtil.pickPdf(new MyCommonCallback<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                showDesc(true,uri.toString());
+            }
+        });
     }
 }

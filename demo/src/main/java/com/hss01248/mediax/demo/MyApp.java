@@ -1,12 +1,12 @@
 package com.hss01248.mediax.demo;
 
-import android.app.Application;
+import androidx.multidex.MultiDexApplication;
 
 import com.facebook.stetho.Stetho;
 import com.hss01248.media.metadata.ExifUtil;
 
 
-public class MyApp extends Application {
+public class MyApp extends MultiDexApplication {
 
     @Override
     public void onCreate() {

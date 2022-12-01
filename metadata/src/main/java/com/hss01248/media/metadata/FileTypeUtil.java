@@ -1,8 +1,9 @@
 package com.hss01248.media.metadata;
 
 
-
-
+import android.net.Uri;
+import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.webkit.MimeTypeMap;
 
 import java.io.File;
@@ -97,15 +98,18 @@ public class FileTypeUtil {
 
         String type = "text/plain";
         String extension = MimeTypeMap.getFileExtensionFromUrl(filePath);
-        try {
-            extension = getType(new File(filePath));
+        /*try {
+            type = getType(new File(filePath));
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
 
-        if (extension != null) {
+        if (!TextUtils.isEmpty(extension)) {
             MimeTypeMap mime = MimeTypeMap.getSingleton();
             type = mime.getMimeTypeFromExtension(extension);
+        }
+        if(type == null){
+            type = "";
         }
         return type;
 
@@ -125,6 +129,37 @@ public class FileTypeUtil {
             }
         }
         return mime;*/
+    }
+
+    public static String getMimeType(Uri uri){
+        if("content".equals(uri.getScheme())){
+            Map<String, Object> infos = ContentUriUtil.getInfos(uri);
+            if(infos != null && infos.containsKey(MediaStore.Files.FileColumns.MIME_TYPE)){
+                String mimeTypeByExt = infos.get(MediaStore.Files.FileColumns.MIME_TYPE)+"";
+                if(!TextUtils.isEmpty(mimeTypeByExt) && !"null".equals(mimeTypeByExt)){
+                    return mimeTypeByExt;
+                }
+            }
+        }
+        String mimetype = FileTypeUtil.getMineType(uri.toString());
+        return mimetype;
+    }
+    public static String getRealMimeType(Uri uri){
+        try {
+            InputStream inputStream = FileHeaderUtil.getInputStream(uri);
+            if(inputStream != null){
+                try {
+                    return   getType(inputStream);
+                }finally {
+                    inputStream.close();
+                }
+
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return "*/*";
+
     }
 
 
@@ -212,15 +247,21 @@ public class FileTypeUtil {
         int readLength;
         try {
             readLength = in.read(b);
+            if (readLength > 0 && readLength < length) {
+                byte[] b2 = new byte[readLength];
+                System.arraycopy(b, 0, b2, 0, readLength);
+                return b2;
+            } else {
+                return b;
+            }
         } catch (IOException e) {
             throw new Exception(e);
-        }
-        if (readLength > 0 && readLength < length) {
-            byte[] b2 = new byte[readLength];
-            System.arraycopy(b, 0, b2, 0, readLength);
-            return b2;
-        } else {
-            return b;
+        }finally {
+            try {
+                in.close();
+            }catch (Throwable throwable){
+                throwable.printStackTrace();
+            }
         }
     }
 
