@@ -59,12 +59,17 @@ public class MetaInfo {
             info.fileInfo.absolutePath = uri.toString();
             info.fileInfo.name = URLUtil.guessFileName(info.fileInfo.absolutePath,"","");
             info.fileInfo.mimeTypeByExt = FileTypeUtil.getMineType(info.fileInfo.absolutePath);
+
+            //todo 文件大小,是否存在
         }
 
+        //内部有一次读流操作
         info.fileInfo.mimeTypeReal = FileTypeUtil.getRealMimeType(uri);
         //使用uri操作,获取文件头:
+        ////内部有一次读流操作
         info.fileHeaders = FileHeaderUtil.parseHeaders(uri,info);
         if("jpg".equals(info.fileInfo.mimeTypeReal)){
+            //内部有一次读流操作
             info.extras.put("jpegQuality",FileHeaderUtil.getJpegQuality(uri));
         }
         //文件真正创建时间: 从文件头里取->没有,则从文件名里取->还没有,才取lastModified
