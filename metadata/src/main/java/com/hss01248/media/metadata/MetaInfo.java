@@ -63,7 +63,7 @@ public class MetaInfo {
 
         info.fileInfo.mimeTypeReal = FileTypeUtil.getRealMimeType(uri);
         //使用uri操作,获取文件头:
-        info.fileHeaders = FileHeaderUtil.parseHeaders(uri);
+        info.fileHeaders = FileHeaderUtil.parseHeaders(uri,info);
         if("jpg".equals(info.fileInfo.mimeTypeReal)){
             info.extras.put("jpegQuality",FileHeaderUtil.getJpegQuality(uri));
         }

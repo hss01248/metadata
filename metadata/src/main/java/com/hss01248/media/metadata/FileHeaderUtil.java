@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
 import androidx.exifinterface.media.ExifInterface;
 
 import com.blankj.utilcode.util.LogUtils;
@@ -27,7 +28,7 @@ public class FileHeaderUtil {
 
     static Map<String, String> uriHeaders = new HashMap<>();
 
-    public static TreeMap<String, String> parseHeaders(Uri uri) {
+    public static TreeMap<String, String> parseHeaders(Uri uri,@Nullable MetaInfo info) {
         String mimetype = FileTypeUtil.getMimeType(uri);
         TreeMap<String, String> metadatas = new TreeMap<>();
 
@@ -36,6 +37,7 @@ public class FileHeaderUtil {
             if(inputStream == null){
                 return metadatas;
             }
+            //todo http文件大小设置
             Map<String, String> stringStringMap = ExifUtil.readExif(inputStream, true);
             for (Map.Entry<String, String> stringStringEntry : stringStringMap.entrySet()) {
                 stringStringEntry.setValue(ExifUtil.stringfySomeTag(stringStringEntry.getKey(), stringStringEntry.getValue()));
