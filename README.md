@@ -32,7 +32,7 @@ Map<String,String> ExifUtil.readExif(java.io.InputStream)
 
 
 
-
+[![](https://jitpack.io/v/hss01248/metadata.svg)](https://jitpack.io/#hss01248/metadata)
 
 #  by gradle
 
@@ -59,4 +59,3 @@ dependencies {
 }
 ```
 
-## 
