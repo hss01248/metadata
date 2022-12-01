@@ -49,3 +49,19 @@ dependencies {
     api "com.github.hss01248.utilcodeEnhance:lib-base:1.0.5"
     api "com.github.hss01248.utilcodeEnhance:toast:1.0.5"
 }
+
+configurations {
+    //url connection代理到okhttp会导致神策的请求无返回
+    // all*.exclude group: 'com.github.hss01248.flipperUtil', module:'network-hooks-chucker'
+    //com.google.android:flexbox:0.3.1, webview引入
+    // if (rootProject.isNoop()) {
+    //all*.exclude group: 'com.github.hss01248.accountCacher', module: 'accountcache'
+    //}
+    all {
+        resolutionStrategy {
+            force "com.google.android.material:material:1.2.0"
+            force "androidx.appcompat:appcompat:1.2.0"
+//  force "com.squareup.okhttp3:okhttp:3.12.12"
+        }
+    }
+}
