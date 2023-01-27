@@ -12,6 +12,7 @@ import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.Utils;
 
 import java.io.File;
+import java.net.URLDecoder;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -28,7 +29,7 @@ public class MetaInfo {
         }
         MetaInfo info = new MetaInfo();
         if("file".equals(uri.getScheme())){
-            String path = uri.toString().substring("file://".length());
+            String path = URLDecoder.decode(uri.toString().substring("file://".length()));
             info.fileInfo = FileInfo.create(new File(path));
 
         }else if("content".equals(uri.getScheme())){
@@ -38,13 +39,13 @@ public class MetaInfo {
                 info.fileInfo = FileInfo.create(documentFile);
                 if(info.fileInfo == null){
                     info.fileInfo = new FileInfo();
-                    info.fileInfo.absolutePath = uri.toString();
+                    info.fileInfo.absolutePath = URLDecoder.decode(uri.toString());
                     info.fileInfo.name = URLUtil.guessFileName(info.fileInfo.absolutePath,"","");
                     info.fileInfo.mimeTypeByExt = FileTypeUtil.getMineType(info.fileInfo.absolutePath);
                 }
             }else {
                 info.fileInfo = new FileInfo();
-                info.fileInfo.absolutePath = uri.toString();
+                info.fileInfo.absolutePath = URLDecoder.decode(uri.toString());
             }
 
             info.uriContent = ContentUriUtil.getInfos(uri);
@@ -56,7 +57,7 @@ public class MetaInfo {
             }
         }else if("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())){
             info.fileInfo = new FileInfo();
-            info.fileInfo.absolutePath = uri.toString();
+            info.fileInfo.absolutePath = URLDecoder.decode(uri.toString());
             info.fileInfo.name = URLUtil.guessFileName(info.fileInfo.absolutePath,"","");
             info.fileInfo.mimeTypeByExt = FileTypeUtil.getMineType(info.fileInfo.absolutePath);
 
