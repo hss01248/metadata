@@ -2,6 +2,8 @@ package com.hss01248.mediax.demo;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,6 +32,8 @@ import org.devio.takephoto.wrap.TakeOnePhotoListener;
 import org.devio.takephoto.wrap.TakePhotoUtil;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -43,31 +47,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
          textView = findViewById(R.id.tv_desc);
 
-
-
-
-        /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE},900);
-        }*/
-        /*SafUtil.getRootDir(this, new SafUtil.ISdRoot() {
-            @Override
-            public void onPermissionGet(DocumentFile dir) {
-                Log.e(SafUtil.TAG,"get root success:"+ URLDecoder.decode(dir.getUri().toString()));
-                DefaultScanFolderCallback callback = new DefaultScanFolderCallback() {
-                    @Override
-                    protected void notifyDataSetChanged() {
-                        Log.e(SafUtil.TAG,"infos notifyDataSetChanged: "+ getInfos().size());
-
-                    }
-                };
-                SafFileFinder.listAllAlbum(callback);
-            }
-
-            @Override
-            public void onPermissionDenied(int resultCode, String msg) {
-
-            }
-        });*/
     }
 
     @Override
@@ -92,27 +71,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-       /* FileFinder.listAllAlbum(new Observer<List<BaseMediaFolderInfo>>() {
-            @Override
-            public void onSubscribe(@io.reactivex.annotations.NonNull Disposable d) {
-
-            }
-
-            @Override
-            public void onNext(@io.reactivex.annotations.NonNull List<BaseMediaFolderInfo> baseMediaFolderInfos) {
-
-            }
-
-            @Override
-            public void onError(@io.reactivex.annotations.NonNull Throwable e) {
-
-            }
-
-            @Override
-            public void onComplete() {
-
-            }
-        });*/
     }
 
     public void select(View view) {
@@ -182,7 +140,11 @@ public class MainActivity extends AppCompatActivity {
         ImgDataSeletor.startPickOneWitchDialog(this, new TakeOnePhotoListener() {
             @Override
             public void onSuccess(String path) {
+
                 showDesc(false,path);
+
+               // compress(path);
+                ExifUtil.getJpgTail(path);
             }
 
             @Override
@@ -197,6 +159,21 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+    }
+
+    private void compress(String path) {
+        Bitmap bitmap = BitmapFactory.decodeFile(path);
+        File file = new File(path);
+        File file1 = new File(file.getParentFile(),"cp-"+file.getName());
+        try {
+            boolean compress = bitmap.compress(Bitmap.CompressFormat.JPEG, 75, new FileOutputStream(file1));
+            LogUtils.i("压缩成功: "+compress+",文件是否存在:"+file1.getAbsolutePath()+","+file1.exists()+",大小:"+file1.length()/1024+"KB");
+            if(compress){
+                ExifUtil.copyExif(path,file1.getAbsolutePath());
+            }
+        } catch (FileNotFoundException e) {
+            LogUtils.w(e);
+        }
     }
 
     public void findDateByFileName(View view) {
@@ -232,6 +209,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(Uri uri) {
                 showDesc(true,uri.toString());
+
             }
         });
 

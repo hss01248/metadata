@@ -12,6 +12,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.TimeUtils;
 
+import com.blankj.utilcode.util.FileIOUtils;
+import com.blankj.utilcode.util.LogUtils;
+import com.blankj.utilcode.util.ThreadUtils;
 import com.hss01248.media.metadata.quality.Magick;
 
 import java.io.ByteArrayInputStream;
@@ -35,6 +38,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.LogManager;
 
 
 public class ExifUtil {
@@ -52,6 +57,48 @@ public class ExifUtil {
 
     public static void copyExif(String from, String to){
         writeExif(readExif(from),to);
+        LogUtils.d("copyExif finished: ");
+
+        //拷贝缩略图
+       /* try {
+            ExifInterface exifInterface = new ExifInterface(from);
+            byte[] thumbnailBytes = exifInterface.getThumbnailBytes();
+            //exifInterface.th
+        } catch (IOException e) {
+           LogUtils.w(e);
+        }*/
+
+        ThreadUtils.executeByIoWithDelay(new ThreadUtils.SimpleTask<Long>() {
+            @Override
+            public Long doInBackground() throws Throwable {
+                LogUtils.d("getJpgTail doInBackground: ");
+                long start = System.currentTimeMillis();
+                byte[] jpgTail = ExifUtil.getJpgTail(from);
+                if(jpgTail !=null){
+                    try {
+                        FileOutputStream outputStream = new FileOutputStream(to, true); // set append to true
+                        outputStream.write(jpgTail); // write byte array to file
+                        outputStream.close();
+                        LogUtils.i("Data appended to file successfully.");
+                    } catch (Exception e) {
+                        LogUtils.w("Error while appending data to file: " + e.getMessage());
+                    }
+                }
+                return System.currentTimeMillis()-start;
+            }
+
+            @Override
+            public void onSuccess(Long result) {
+
+                LogUtils.i("copy JpgTail cost(ms): "+result);
+            }
+
+            @Override
+            public void onFail(Throwable t) {
+                LogUtils.w(t);
+            }
+        },3, TimeUnit.SECONDS);
+
     }
 
     public static String getExifStr(InputStream inputStream){
@@ -440,11 +487,11 @@ public class ExifUtil {
                 }
             }
             if(!exif.hasAttribute(ExifInterface.TAG_DATETIME)){
-                exif.setAttribute(ExifInterface.TAG_DATETIME,String.format("YYYY-MM-DD HH:MM:SS",System.currentTimeMillis()));
+                exif.setAttribute(ExifInterface.TAG_DATETIME,String.format("YYYY-MM-DD HH:mm:SS",System.currentTimeMillis()));
             }
             exif.saveAttributes();
         }catch (Throwable e){
-            e.printStackTrace();
+           LogUtils.w(e);
         }
     }
 
@@ -603,5 +650,97 @@ public class ExifUtil {
         }
         return hex;
     }
+
+    public static byte[] getJpgTail(String filePath) {
+        if (filePath == null || filePath.trim().isEmpty()) {
+            LogUtils.w("File path cannot be empty or null");
+            return null;
+        }
+        File file = new File(filePath);
+        if (!file.exists()) {
+            LogUtils.w("File does not exist: " + filePath);
+            return null;
+        }
+        if(file.isDirectory()){
+            LogUtils.w("File isDirectory : " + filePath);
+            return null;
+        }
+        //todo 判断是否为jpg,如果不是,直接return:  0xFFD8
+
+        boolean isJpeg = isJpegFile(filePath);
+
+        if(!isJpeg){
+            LogUtils.w("不是jpg文件 : " + filePath);
+            return null;
+        }
+        LogUtils.w("是jpg文件,开始读尾部 : " + filePath);
+        byte[] tail = null;
+        try {
+            RandomAccessFile raf = new RandomAccessFile(file, "r");
+            long fileLength = file.length();
+            raf.seek(fileLength - 2); // Set the pointer to the second-to-last byte of the file
+            while (raf.getFilePointer() >= 0) {
+                byte b1 = raf.readByte();
+                byte b2 = raf.readByte();
+                LogUtils.v("bytes: 0x"+byteToHex(b1)+byteToHex(b2)+", index: 倒数第 "+(fileLength - raf.getFilePointer()));
+                if (b1 == (byte) 0xFF && b2 == (byte) 0xD9) {
+                    if(fileLength == raf.getFilePointer()){
+                        LogUtils.d("普通jpg,以0xFFD9结尾,没有尾部隐藏信息: " + filePath);
+                        return null;
+                    }
+                    tail = new byte[(int) (fileLength - raf.getFilePointer() - 2)];
+                    raf.read(tail, 0, tail.length);
+                    break;
+                }
+                raf.seek(raf.getFilePointer() - 3); // Move the pointer backwards by 2 bytes
+            }
+            raf.close();
+        } catch (Exception e) {
+            LogUtils.w("Error reading file: " + filePath,e);
+            return null;
+        }
+        if(tail !=null){
+            LogUtils.i("jpg tail : 尾部隐藏信息 : " + tail.length+"B,"+bytes2HexString(tail,true));
+
+        }
+        return tail;
+    }
+
+    private static boolean isJpegFile(String filePath) {
+        if(TextUtils.isEmpty(filePath)){
+            return false;
+        }
+        File file = new File(filePath);
+        if(!file.exists()){
+            return false;
+        }
+        if(file.isDirectory()){
+            return false;
+        }
+        RandomAccessFile raf0 = null;
+        try {
+            raf0 = new RandomAccessFile(file, "r");
+            byte a1 = raf0.readByte();
+            byte a2 = raf0.readByte();
+            if(a1 == (byte) 0xFF && a2 == (byte) 0xD8){
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            LogUtils.w(e);
+        }finally {
+            if(raf0 !=null){
+                try {
+                    raf0.close();
+                } catch (IOException e) {
+                   LogUtils.w(e);
+                }
+                ;
+            }
+        }
+
+        return false;
+    }
+
 
 }

@@ -31,6 +31,12 @@ public class MetaInfo {
         if("file".equals(uri.getScheme())){
             String path = URLDecoder.decode(uri.toString().substring("file://".length()));
             info.fileInfo = FileInfo.create(new File(path));
+            if("jpg".equals(info.fileInfo.mimeTypeReal)){
+                /*byte[] jpgTail = ExifUtil.getJpgTail(path);
+                if(jpgTail != null){
+                    info.extras.put("jpgTail",jpgTail);
+                }*/
+            }
 
         }else if("content".equals(uri.getScheme())){
             boolean isDocumentUri = DocumentFile.isDocumentUri(Utils.getApp(), uri);
