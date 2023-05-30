@@ -34,6 +34,7 @@ import org.devio.takephoto.wrap.TakePhotoUtil;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.RandomAccessFile;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -143,8 +144,28 @@ public class MainActivity extends AppCompatActivity {
 
                 showDesc(false,path);
 
-               // compress(path);
-                ExifUtil.getJpgTail(path);
+                compress(path);
+                //ExifUtil.getJpgTail(path);
+         /*       long videoLength = ExifUtil.getVideoLength(path);
+                LogUtils.i("video length: "+ videoLength);
+                if(videoLength<=0 ){
+                    return;
+                }
+                File file = new File(path);
+                RandomAccessFile raf = null;
+                byte[] bytes = new byte[(int) videoLength];
+                try {
+                    raf = new RandomAccessFile(file, "r");
+                    long fileLength = file.length();
+                    raf.seek(fileLength - videoLength);
+                    raf.readFully(bytes);
+                    String s = ExifUtil.bytes2HexString(bytes, true);
+                    LogUtils.w("read index:"+raf.getFilePointer()+","+ file.length()+","+s);
+                    raf.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }*/
+
             }
 
             @Override

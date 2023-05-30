@@ -121,3 +121,5 @@ byte[] jpgTail = ExifUtil.getJpgTail(from);
 ```
 
 > 正确的解析方式应该是: 从xmp中解析到 Item:Length="482189",然后从文件尾部读取482189的长度出来.
+
+![image-20230530105032531](https://cdn.jsdelivr.net/gh/shuiniuhss/myimages@main/imagemac3/image-20230530105032531.png)

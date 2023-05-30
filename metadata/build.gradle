@@ -38,6 +38,7 @@ dependencies {
     api 'com.blankj:utilcodex:1.30.0'//基底
     api "com.squareup.okhttp3:okhttp:3.12.12"
     implementation 'androidx.appcompat:appcompat:1.2.0'
+    api group: 'commons-lang', name: 'commons-lang', version: '2.6'
 
 
 }

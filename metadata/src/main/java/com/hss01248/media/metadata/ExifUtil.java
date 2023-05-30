@@ -5,17 +5,16 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import androidx.exifinterface.media.ExifInterface;
 
-import android.graphics.ColorSpace;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.TimeUtils;
 
-import com.blankj.utilcode.util.FileIOUtils;
 import com.blankj.utilcode.util.LogUtils;
-import com.blankj.utilcode.util.ThreadUtils;
 import com.hss01248.media.metadata.quality.Magick;
+
+import org.w3c.dom.Node;
+import org.xml.sax.InputSource;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -26,20 +25,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.LogManager;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
 
 
 public class ExifUtil {
@@ -56,8 +57,9 @@ public class ExifUtil {
     }
 
     public static void copyExif(String from, String to){
+        long start = System.currentTimeMillis();
         writeExif(readExif(from),to);
-        LogUtils.d("copyExif finished: ");
+        LogUtils.d("copyExif finished: cost ms: "+(System.currentTimeMillis() - start));
 
         //拷贝缩略图
        /* try {
@@ -67,38 +69,24 @@ public class ExifUtil {
         } catch (IOException e) {
            LogUtils.w(e);
         }*/
+        copyMotionPhotoJpegTail(from, to);
 
-        ThreadUtils.executeByIoWithDelay(new ThreadUtils.SimpleTask<Long>() {
-            @Override
-            public Long doInBackground() throws Throwable {
-                LogUtils.d("getJpgTail doInBackground: ");
-                long start = System.currentTimeMillis();
-                byte[] jpgTail = ExifUtil.getJpgTail(from);
-                if(jpgTail !=null){
-                    try {
-                        FileOutputStream outputStream = new FileOutputStream(to, true); // set append to true
-                        outputStream.write(jpgTail); // write byte array to file
-                        outputStream.close();
-                        LogUtils.i("Data appended to file successfully.");
-                    } catch (Exception e) {
-                        LogUtils.w("Error while appending data to file: " + e.getMessage());
-                    }
-                }
-                return System.currentTimeMillis()-start;
+    }
+
+    public static  void copyMotionPhotoJpegTail(String from, String to){
+        long start = System.currentTimeMillis();
+        byte[] jpgTail = ExifUtil.getMotionPhotoJpgTail(from);
+        if(jpgTail !=null){
+            try {
+                FileOutputStream outputStream = new FileOutputStream(to, true); // set append to true
+                outputStream.write(jpgTail); // write byte array to file
+                outputStream.close();
+                LogUtils.i("Data appended to file successfully."+to);
+            } catch (Exception e) {
+                LogUtils.w("Error while appending data to file: " + e.getMessage());
             }
-
-            @Override
-            public void onSuccess(Long result) {
-
-                LogUtils.i("copy JpgTail cost(ms): "+result);
-            }
-
-            @Override
-            public void onFail(Throwable t) {
-                LogUtils.w(t);
-            }
-        },3, TimeUnit.SECONDS);
-
+            LogUtils.d("copyJpegTail : cost ms: "+(System.currentTimeMillis() - start));
+        }
     }
 
     public static String getExifStr(InputStream inputStream){
@@ -651,6 +639,128 @@ public class ExifUtil {
         return hex;
     }
 
+    public static long getVideoLength(String path){
+        Map<String, String> stringStringMap = readExif(path);
+        String xmp = stringStringMap.get("Xmp");
+        if(TextUtils.isEmpty(xmp)){
+            return 0;
+        }
+/*        boolean isMotionPhoto = xmp.contains("MotionPhoto=\"1\"");
+        if(!isMotionPhoto){
+            return 0;
+        }*/
+        int index = xmp.indexOf("Item:Semantic=\"MotionPhoto\"");
+        if(index<0){
+            return 0;
+        }
+        String str = xmp.substring(index+"Item:Semantic=\"MotionPhoto\"".length()).trim();
+        if(str.startsWith("\n")){
+            str = str.substring(1);
+        }
+        if(str.startsWith("Item:Length=\"")){
+            str = str.substring("Item:Length=\"".length());
+
+            String time = str.substring(0,str.indexOf("\""));
+            LogUtils.w("MotionPhoto video length: "+time);
+            try {
+                return  Long.parseLong(time);
+            }catch (Throwable throwable){
+                throwable.printStackTrace();
+            }
+        }
+        return 0;
+    }
+
+
+
+
+
+    /**
+     *
+     * <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.1.0-jc003">
+     *       <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+     *         <rdf:Description rdf:about=""
+     *             xmlns:GCamera="http://ns.google.com/photos/1.0/camera/"
+     *             xmlns:Container="http://ns.google.com/photos/1.0/container/"
+     *             xmlns:Item="http://ns.google.com/photos/1.0/container/item/"
+     *             xmlns:xmpNote="http://ns.adobe.com/xmp/note/"
+     *           GCamera:MotionPhoto="1"
+     *           GCamera:MotionPhotoVersion="1"
+     *           GCamera:MotionPhotoPresentationTimestampUs="857949"
+     *           xmpNote:HasExtendedXMP="9F6C5546DA50BD17DCB8DD1604C96BE6">
+     *           <Container:Directory>
+     *             <rdf:Seq>
+     *               <rdf:li rdf:parseType="Resource">
+     *                 <Container:Item
+     *                   Item:Mime="image/jpeg"
+     *                   Item:Semantic="Primary"
+     *                   Item:Length="0"
+     *                   Item:Padding="0"/>
+     *               </rdf:li>
+     *               <rdf:li rdf:parseType="Resource">
+     *                 <Container:Item
+     *                   Item:Mime="video/mp4"
+     *                   Item:Semantic="MotionPhoto"
+     *                   Item:Length="482189"
+     *                   Item:Padding="0"/>
+     *               </rdf:li>
+     *             </rdf:Seq>
+     *           </Container:Directory>
+     *         </rdf:Description>
+     *       </rdf:RDF>
+     *     </x:xmpmeta>
+     *
+     *     语法: https://www.itpow.com/c/2010/07/8N0MHOUN27V0R3JB.asp
+     * @param xmlString
+     * @return
+     */
+    public static long getVideoLengthWithXPath(String xmlString) {
+        try {
+            XPathFactory xpathFactory = XPathFactory.newInstance();
+            XPathExpression expr = xpathFactory.newXPath().compile("//Container:Item[@Item:Mime='video/mp4']");///@Item:Length
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            InputSource is = new InputSource(new StringReader(xmlString));
+            Node result = (Node) expr.evaluate(builder.parse(is), XPathConstants.NODE);
+            if (result != null) {
+                long length = Long.parseLong(result.getNodeValue());
+                System.out.println("Video length: " + length + " bytes");
+                return length;
+            }
+        } catch (Exception e) {
+            System.err.println("Error selecting video length with XPath: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    public static byte[] getMotionPhotoJpgTail(String path){
+        long videoLength = ExifUtil.getVideoLength(path);
+        LogUtils.i("video length: "+ videoLength);
+        if(videoLength<=0 ){
+            return null;
+        }
+        File file = new File(path);
+        RandomAccessFile raf = null;
+        byte[] bytes = new byte[(int) videoLength];
+        try {
+            raf = new RandomAccessFile(file, "r");
+            long fileLength = file.length();
+            raf.seek(fileLength - videoLength);
+            raf.readFully(bytes);
+            //String s = ExifUtil.bytes2HexString(bytes, true);
+            //LogUtils.w("read index:"+raf.getFilePointer()+","+ file.length()+","+s);
+            raf.close();
+        } catch (Exception e) {
+            LogUtils.w(e);
+        }
+        return bytes;
+    }
+
+    /**
+     * 不能仅凭ffd9来判断
+     * @param filePath
+     * @return
+     */
     public static byte[] getJpgTail(String filePath) {
         if (filePath == null || filePath.trim().isEmpty()) {
             LogUtils.w("File path cannot be empty or null");
@@ -682,7 +792,7 @@ public class ExifUtil {
             while (raf.getFilePointer() >= 0) {
                 byte b1 = raf.readByte();
                 byte b2 = raf.readByte();
-                LogUtils.v("bytes: 0x"+byteToHex(b1)+byteToHex(b2)+", index: 倒数第 "+(fileLength - raf.getFilePointer()));
+                //LogUtils.v("bytes: 0x"+byteToHex(b1)+byteToHex(b2)+", index: 倒数第 "+(fileLength - raf.getFilePointer()));
                 if (b1 == (byte) 0xFF && b2 == (byte) 0xD9) {
                     if(fileLength == raf.getFilePointer()){
                         LogUtils.d("普通jpg,以0xFFD9结尾,没有尾部隐藏信息: " + filePath);
