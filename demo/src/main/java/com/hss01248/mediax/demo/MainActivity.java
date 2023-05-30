@@ -144,7 +144,8 @@ public class MainActivity extends AppCompatActivity {
 
                 showDesc(false,path);
 
-                compress(path);
+                //compress(path);
+                ExifUtil.getMotionPhotoJpgTail(path);
                 //ExifUtil.getJpgTail(path);
          /*       long videoLength = ExifUtil.getVideoLength(path);
                 LogUtils.i("video length: "+ videoLength);

@@ -69,8 +69,24 @@ public class ExifUtil {
         } catch (IOException e) {
            LogUtils.w(e);
         }*/
-        copyMotionPhotoJpegTail(from, to);
+        //copyMotionPhotoJpegTail(from, to);
 
+    }
+
+    public static void copyJpegTail(String from, String to){
+        long start = System.currentTimeMillis();
+        byte[] jpgTail = ExifUtil.getJpgTail(from);
+        if(jpgTail !=null){
+            try {
+                FileOutputStream outputStream = new FileOutputStream(to, true); // set append to true
+                outputStream.write(jpgTail); // write byte array to file
+                outputStream.close();
+                LogUtils.i("Data appended to file successfully."+to);
+            } catch (Exception e) {
+                LogUtils.w("Error while appending data to file: " + e.getMessage());
+            }
+            LogUtils.d("copyJpegTail : cost ms: "+(System.currentTimeMillis() - start));
+        }
     }
 
     public static  void copyMotionPhotoJpegTail(String from, String to){
@@ -85,7 +101,7 @@ public class ExifUtil {
             } catch (Exception e) {
                 LogUtils.w("Error while appending data to file: " + e.getMessage());
             }
-            LogUtils.d("copyJpegTail : cost ms: "+(System.currentTimeMillis() - start));
+            LogUtils.d("copyMotionPhoto JpegTail : cost ms: "+(System.currentTimeMillis() - start));
         }
     }
 
@@ -749,6 +765,28 @@ public class ExifUtil {
             raf.readFully(bytes);
             //String s = ExifUtil.bytes2HexString(bytes, true);
             //LogUtils.w("read index:"+raf.getFilePointer()+","+ file.length()+","+s);
+
+            // 然后继续读前面的,直到ffd9:
+            byte[] tail = null;
+            raf.seek(fileLength - videoLength - 2); // Set the pointer to the second-to-last byte of the file
+            while (raf.getFilePointer() >= 0) {
+                byte b1 = raf.readByte();
+                byte b2 = raf.readByte();
+                //LogUtils.v("bytes: 0x"+byteToHex(b1)+byteToHex(b2)+", index: 倒数第 "+(fileLength - raf.getFilePointer()));
+                if (b1 == (byte) 0xFF && b2 == (byte) 0xD9) {
+                    if(fileLength - videoLength == raf.getFilePointer()){
+                        LogUtils.d("普通jpg,MotionPhoto之前, 以0xFFD9结尾,没有尾部隐藏信息: " + path);
+                        break;
+                    }
+                    tail = new byte[(int) (fileLength - raf.getFilePointer() - 2)];
+                    raf.read(tail, 0, tail.length);
+                    break;
+                }
+                raf.seek(raf.getFilePointer() - 3); // Move the pointer backwards by 2 bytes
+            }
+            if(tail != null){
+                LogUtils.i("jpg tail : 尾部隐藏信息 : " + tail.length+"B,"+bytes2HexString(tail,true));
+            }
             raf.close();
         } catch (Exception e) {
             LogUtils.w(e);
