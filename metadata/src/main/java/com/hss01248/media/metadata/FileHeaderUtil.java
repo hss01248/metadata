@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -50,7 +51,7 @@ public class FileHeaderUtil {
             try {
                 //没有权限时,crash
                 if ("file".equals(uri.getScheme())) {
-                    retriever.setDataSource(uri.toString().substring("file://".length()));
+                    retriever.setDataSource(URLDecoder.decode(uri.toString().substring("file://".length())));
                 } else if ("content".equals(uri.getScheme())) {
                     retriever.setDataSource(Utils.getApp(), uri);
                 } else if ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) {
