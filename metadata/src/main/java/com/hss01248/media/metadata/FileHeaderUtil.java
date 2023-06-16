@@ -158,6 +158,10 @@ public class FileHeaderUtil {
         if(info.fileHeaders.containsKey(ExifInterface.TAG_GPS_LONGITUDE) && !"0".equals(info.fileHeaders.get(ExifInterface.TAG_GPS_LONGITUDE))){
             info.extras.put(ExifInterface.TAG_GPS_LONGITUDE,info.fileHeaders.get(ExifInterface.TAG_GPS_LONGITUDE));
         }
+        if(info.fileHeaders.containsKey("location") ){
+            //视频信息里 location: "+22.998+110.6769/
+            info.extras.put("location",info.fileHeaders.get("location"));
+        }
 
     }
 }
