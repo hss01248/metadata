@@ -93,7 +93,7 @@ public class FileHeaderUtil {
 
         try {
             if ("file".equals(uri.getScheme())) {
-                inputStream = new FileInputStream(new File(uri.toString().substring("file://".length())));
+                inputStream = new FileInputStream(new File(URLDecoder.decode(uri.toString().substring("file://".length()))));
             } else if ("content".equals(uri.getScheme())) {
                 inputStream = Utils.getApp().getContentResolver().openInputStream(uri);
             } else if ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) {
