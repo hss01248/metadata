@@ -6,6 +6,7 @@ import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.webkit.MimeTypeMap;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -380,9 +381,9 @@ public class FileTypeUtil {
 
      */
     public static String getType(File file)  {
-        FileInputStream in = null;
+        InputStream in = null;
         try {
-            in = new FileInputStream(file);
+            in = ExifUtil.fileInputStream(file);
             return getType(in, file.getName());
         }catch (Throwable throwable){
             throwable.printStackTrace();
@@ -392,7 +393,7 @@ public class FileTypeUtil {
         }
     }
 
-    private static void close(FileInputStream in) {
+    public static void close(Closeable in) {
         try {
             in.close();
         } catch (Exception e) {

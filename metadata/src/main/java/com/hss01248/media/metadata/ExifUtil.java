@@ -45,7 +45,7 @@ import javax.xml.xpath.XPathFactory;
 
 public class ExifUtil {
 
-
+   public static  byte dataToAdd = 0x66;
     static Context context;
    public static boolean enableLog;
     public static void init(Context context){
@@ -114,21 +114,7 @@ public class ExifUtil {
              fileSize = formatFileSize(inputStream.available());
              path = getPathFromStream(inputStream);
 
-
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-            byte[] buffer = new byte[4096];
-            long count = 0;
-            int n = 0;
-            while (-1 != (n = inputStream.read(buffer))) {
-                output.write(buffer, 0, n);
-                count += n;
-            }
-            byte[] bytes = output.toByteArray();
-            try {
-                inputStream.close();
-            }catch (Throwable throwable){
-
-            }
+            byte[] bytes = decryptedInputStream(inputStream);
 
             inputStream = new ByteArrayInputStream(bytes);
             wh = formatWh(new ByteArrayInputStream(bytes));
@@ -160,21 +146,7 @@ public class ExifUtil {
             fileSize = formatFileSize(inputStream.available());
             path = getPathFromStream(inputStream);
 
-
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-            byte[] buffer = new byte[4096];
-            long count = 0;
-            int n = 0;
-            while (-1 != (n = inputStream.read(buffer))) {
-                output.write(buffer, 0, n);
-                count += n;
-            }
-            byte[] bytes = output.toByteArray();
-            try {
-                inputStream.close();
-            }catch (Throwable throwable){
-
-            }
+            byte[] bytes  = decryptedInputStream(inputStream);
 
             inputStream = new ByteArrayInputStream(bytes);
             type = FileTypeUtil.getType(inputStream);
@@ -200,6 +172,55 @@ public class ExifUtil {
         return map;
     }
 
+
+    public static byte[] decryptedInputStream(InputStream inputStream){
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        byte[] buffer = new byte[4096];
+        long count = 0;
+        int n = 0;
+        try{
+            while (-1 != (n = inputStream.read(buffer))) {
+                output.write(buffer, 0, n);
+                count += n;
+            }
+            byte[] bytes = output.toByteArray();
+            FileTypeUtil.close(inputStream);
+            if(bytes[0] == dataToAdd){
+               //return  bytes.;
+                byte[] subArray = new byte[bytes.length-1];
+                System.arraycopy(bytes, 1, subArray, 0, bytes.length);
+                return subArray;
+            }else{
+               return bytes;
+            }
+        }catch (Throwable throwable){
+            LogUtils.w(throwable);
+            return  null;
+        }finally {
+            FileTypeUtil.close(inputStream);
+        }
+
+    }
+
+    public static InputStream fileInputStream(File file){
+        FileInputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream(file);
+            boolean encrypted = inputStream.read() == dataToAdd;
+            if(encrypted){
+                return  inputStream;
+            }else {
+                FileTypeUtil.close(inputStream);
+                return new FileInputStream(file);
+            }
+           //
+        } catch (Exception e) {
+            LogUtils.e(file.getAbsolutePath(),e);
+            return null;
+        }
+
+    }
+
     static SimpleDateFormat format;
     public static Map<String,String> getBasicMap(String filePath){
         String fileSize = "";
@@ -211,8 +232,16 @@ public class ExifUtil {
 
         }*/
         File file = new File(filePath);
+       // FileInputStream inputStream = new FileInputStream(file);
+
         Map<String,String> map = new TreeMap<>();
         try {
+            FileInputStream inputStream = new FileInputStream(file);
+            boolean encrypted = inputStream.read() == dataToAdd;
+            FileTypeUtil.close(inputStream);
+
+            map.put("0-encrypted",encrypted+"");
+
             fileSize = formatFileSize(file.length());
             path = filePath;
 
@@ -221,17 +250,17 @@ public class ExifUtil {
             type = FileTypeUtil.getType(file);
 
             if("jpg".equals(type)){
-                quality = new Magick().getJPEGImageQuality(new FileInputStream(file))+"";
+                quality = new Magick().getJPEGImageQuality(fileInputStream(file))+"";
                 map.put("0-jpg-quality",quality);
                 /*String tail = readJpgTail(filePath);
                 map.put("0-jpg-tail",tail);*/
             }
             if(FileTypeUtil.getMimeByType(type).contains("image")){
-                wh = formatWh(new FileInputStream(file));
+                wh = formatWh(fileInputStream(file));
                 map.put("0-wh",wh);
             }
         } catch (Throwable e) {
-            e.printStackTrace();
+            LogUtils.w(filePath,e);
         }
 
         //for (Map.Entry<String, String> stringStringEntry : map.entrySet()) {
@@ -251,6 +280,7 @@ public class ExifUtil {
 
 
 
+    @Deprecated
     private static String getPathFromStream(InputStream inputStream) {
         try {
             if(inputStream instanceof FileInputStream){
@@ -277,9 +307,9 @@ public class ExifUtil {
             exifMap.put("00-path",path);
             exifMap.put("0-fileSize",formatFileSize(file.length()));
 
-            exifMap.put("0-wh",formatWh(new FileInputStream(path)));
+            exifMap.put("0-wh",formatWh(fileInputStream(file)));
 
-            exifMap.put("0-jpg-quality",new Magick().getJPEGImageQuality(new FileInputStream(file))+"");
+            exifMap.put("0-jpg-quality",new Magick().getJPEGImageQuality(fileInputStream(file))+"");
         }catch (Throwable throwable){
             throwable.printStackTrace();
         }
@@ -292,8 +322,8 @@ public class ExifUtil {
 
     public static Map<String,String> readExif(String path){
         try {
-            return readExif(new FileInputStream(new File(path)),true);
-        } catch (FileNotFoundException e) {
+            return readExif(fileInputStream(new File(path)),true);
+        } catch (Exception e) {
             e.printStackTrace();
             return new TreeMap<>();
         }
@@ -304,7 +334,8 @@ public class ExifUtil {
     public static Map<String,String> readExif(InputStream inputStream,boolean close){
         Map<String,String> exifMap = new TreeMap<>();
         try {
-            ExifInterface exif = new ExifInterface(inputStream);
+            byte[] bytes = decryptedInputStream(inputStream);
+            ExifInterface exif = new ExifInterface(new ByteArrayInputStream(bytes));
             Class exifClazz = ExifInterface.class;
             Field[] fields = exifClazz.getDeclaredFields();
             for (int i = 0; i < fields.length; i++) {
@@ -350,11 +381,7 @@ public class ExifUtil {
         } catch (Throwable e) {
             e.printStackTrace();
         }finally {
-            try {
-                inputStream.close();
-            }catch (Throwable e){
-
-            }
+            FileTypeUtil.close(inputStream);
         }
         /**
          *options.outHeight为原始图片的高
