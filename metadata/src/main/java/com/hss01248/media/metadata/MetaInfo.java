@@ -7,6 +7,7 @@ import android.text.TextUtils;
 import android.webkit.URLUtil;
 
 import androidx.documentfile.provider.DocumentFile;
+import androidx.exifinterface.media.ExifInterface;
 
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.Utils;
@@ -22,6 +23,14 @@ public class MetaInfo {
     Map<String,String> fileHeaders = new TreeMap<>();
 
     Map<String,Object> extras = new TreeMap<>();
+
+    public String getXml(){
+        if(!fileHeaders.containsKey(ExifInterface.TAG_XMP)){
+            return  "";
+        }
+        String xml = fileHeaders.get(ExifInterface.TAG_XMP);
+        return xml;
+    }
 
     public static MetaInfo parse(Uri uri){
         if(uri ==null){

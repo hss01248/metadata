@@ -10,9 +10,11 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.blankj.utilcode.util.EncodeUtils;
 import com.blankj.utilcode.util.LogUtils;
 import com.hss01248.media.metadata.quality.Magick;
 
+import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 
@@ -26,6 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
@@ -35,9 +39,16 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
@@ -427,8 +438,14 @@ public class ExifUtil {
         if(ExifInterface.TAG_ORIENTATION.equals(tag)){
             return parseOritation(val);
         }
+         /*if(ExifInterface.TAG_XMP.equals(tag)){
+             return parseXmp(val);
+         }*/
         return val;
     }
+
+
+
 
     private static String parseColorSpace(String val) {
         if((ExifInterface.COLOR_SPACE_S_RGB+"").equals(val)){

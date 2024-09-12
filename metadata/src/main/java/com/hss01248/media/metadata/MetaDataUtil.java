@@ -29,10 +29,12 @@ public class MetaDataUtil {
     }
 
     public static String getDes(String path) {
-        return new GsonBuilder().setPrettyPrinting().create().toJson(getMetaData(path));
+        return new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(getMetaData(path));
     }
     public static String getDes2(Uri uri){
-        return new GsonBuilder().setPrettyPrinting().create().toJson(getMetaData2(uri));
+        MetaInfo info =  getMetaData2( uri);
+        return new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(getMetaData2(uri))
+                +"\n"+info.getXml();
     }
 
     public static MetaInfo getMetaData2(Uri uri){

@@ -123,6 +123,10 @@ public class MainActivity extends AppCompatActivity {
                 if(dialog != null) dialog.dismiss();
                 String cost = "getExifStr cost:"+(System.currentTimeMillis() - start)+"ms\n";
                String  des = cost + result;
+
+              //  des += MetaDataUtil.getMetaData2(Uri.parse(uri)).getXml();
+
+
                 textView.setText(des);
             }
 
@@ -227,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void pickBySys(View view) {
-        MediaPickOrCaptureUtil.pickOrCaptureImageOrVideo(15, new MyCommonCallback<Uri>() {
+        MediaPickOrCaptureUtil.pickOrCaptureImageOrVideo(false,15, new MyCommonCallback<Uri>() {
             @Override
             public void onSuccess(Uri uri) {
                 showDesc(true,uri.toString());
