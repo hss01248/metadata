@@ -29,7 +29,15 @@ public class MetaDataUtil {
     }
 
     public static String getDes(String path) {
-        return new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(getMetaData(path));
+        if(path.startsWith("content://")){
+            return getDes2(Uri.parse(path));
+        }
+        Map<String, String> map = getMetaData( path);
+        String xml = "";
+        if(map.containsKey(ExifInterface.TAG_XMP)){
+            xml = map.get(ExifInterface.TAG_XMP);
+        }
+        return new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(map)+"\n"+xml;
     }
     public static String getDes2(Uri uri){
         MetaInfo info =  getMetaData2( uri);
