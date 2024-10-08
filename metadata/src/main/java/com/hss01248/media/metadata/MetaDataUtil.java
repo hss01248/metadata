@@ -48,6 +48,7 @@ public class MetaDataUtil {
     public static MetaInfo getMetaData2(Uri uri){
         return MetaInfo.parse(uri);
     }
+    @Deprecated
     public static Map<String, String> getMetaData(String path) {
         String mimetype = FileTypeUtil.getMineType(path);
         Map<String, String> data = new TreeMap<>();
@@ -67,6 +68,7 @@ public class MetaDataUtil {
             for (Map.Entry<String, String> stringStringEntry : data.entrySet()) {
                 stringStringEntry.setValue(ExifUtil.stringfySomeTag(stringStringEntry.getKey(), stringStringEntry.getValue()));
             }
+
         } else if (mimetype.contains("video") || mimetype.contains("audio")) {
             data.putAll(getAllInfo(path));
         } else if ("gz".equals(FileTypeUtil.getType(new File(path)))) {

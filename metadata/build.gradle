@@ -39,6 +39,7 @@ dependencies {
     api "com.squareup.okhttp3:okhttp:3.12.12"
     implementation 'androidx.appcompat:appcompat:1.2.0'
     api group: 'commons-lang', name: 'commons-lang', version: '2.6'
+    api "com.github.hss01248.ImageLoader:imagelist:3.9.3.03"
 
 
 }

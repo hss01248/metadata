@@ -11,6 +11,7 @@ import androidx.exifinterface.media.ExifInterface;
 
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.Utils;
+import com.hss01248.motion_photos.MotionPhotoUtil;
 
 import java.io.File;
 import java.net.URLDecoder;
@@ -23,6 +24,8 @@ public class MetaInfo {
     Map<String,String> fileHeaders = new TreeMap<>();
 
     Map<String,Object> extras = new TreeMap<>();
+
+    Map<String,String> motionVideo = new TreeMap<>();
 
     public String getXml(){
         if(!fileHeaders.containsKey(ExifInterface.TAG_XMP)){
@@ -91,6 +94,13 @@ public class MetaInfo {
         //文件真正创建时间: 从文件头里取->没有,则从文件名里取->还没有,才取lastModified
         FileHeaderUtil.parseRealCreatedTime(info);
         FileHeaderUtil.parseLocation(info);
+
+        //motion image:
+        if(MotionPhotoUtil.isMotionImage(info.fileInfo.absolutePath,false)){
+            String motionVideoPath = MotionPhotoUtil.getMotionVideoPath(info.fileInfo.absolutePath);
+            info.motionVideo = MetaDataUtil.getAllInfo(motionVideoPath);
+
+        }
         return info;
     }
 
